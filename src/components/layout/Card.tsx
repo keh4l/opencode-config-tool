@@ -9,10 +9,11 @@ interface ConfigCardProps {
   icon?: LucideIcon;
   children: ReactNode;
   actions?: ReactNode;
+  badge?: ReactNode;
   className?: string;
 }
 
-export function ConfigCard({ title, description, icon: Icon, children, actions, className }: ConfigCardProps) {
+export function ConfigCard({ title, description, icon: Icon, children, actions, badge, className }: ConfigCardProps) {
   return (
     <div
       className={cn(
@@ -29,11 +30,14 @@ export function ConfigCard({ title, description, icon: Icon, children, actions, 
               <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
             </div>
           )}
-          <div>
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            )}
+          <div className="flex items-center gap-2">
+            <div>
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              {description && (
+                <p className="text-sm text-muted-foreground">{description}</p>
+              )}
+            </div>
+            {badge}
           </div>
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}

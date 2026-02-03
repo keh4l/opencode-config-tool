@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useState, useEffect } from 'react';
-import { Sidebar, Header, MainContent, type NavItem } from '@/components/layout';
+import { Sidebar, Header, MainContent, LoadingOverlay, type NavItem, type ConfigMode } from '@/components/layout';
 import {
   ModelConfig,
   ProviderConfig,
@@ -19,28 +19,42 @@ import {
   CompactionConfigPanel,
   ExperimentalConfigPanel,
   MiscConfigPanel,
+  // Oh My OpenCode 组件
+  OmoPresetsPanel,
+  OmoAgentsPanel,
+  OmoCategoriesPanel,
+  OmoBackgroundPanel,
+  OmoTmuxPanel,
+  OmoSisyphusPanel,
+  OmoDisabledPanel,
+  OmoClaudeCodePanel,
+  OmoExperimentalPanel,
 } from '@/components/config';
 import { TemplateDialog } from '@/components/TemplateDialog';
 import { JsonPreview } from '@/components/JsonPreview';
 import { ImportExportDialog } from '@/components/ImportExportDialog';
 import { useConfigStore } from '@/hooks/useConfig';
+import { useOhMyOpenCodeStore } from '@/hooks/useOhMyOpenCode';
 import { useThemeStore } from '@/hooks/useTheme';
 import { Toaster } from '@/components/ui/toaster';
 
 export default function App() {
+  const [configMode, setConfigMode] = useState<ConfigMode>('opencode');
   const [activeNav, setActiveNav] = useState<NavItem>('model');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showImportExport, setShowImportExport] = useState<'import' | 'export' | null>(null);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
 
-  const { loadConfig, resetConfig } = useConfigStore();
+  const { loadConfig: loadOpenCodeConfig, isLoading: isOpenCodeLoading } = useConfigStore();
+  const { loadConfig: loadOmoConfig, isLoading: isOmoLoading } = useOhMyOpenCodeStore();
   const { theme } = useThemeStore();
 
   // 初始化加载配置
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    loadOpenCodeConfig();
+    loadOmoConfig();
+  }, [loadOpenCodeConfig, loadOmoConfig]);
 
   // 初始化主题
   useEffect(() => {
@@ -52,44 +66,89 @@ export default function App() {
     }
   }, [theme]);
 
+  // 切换配置模式时重置导航
+  const handleConfigModeChange = (mode: ConfigMode) => {
+    setConfigMode(mode);
+    // 切换到对应模式的第一个导航项
+    if (mode === 'opencode') {
+      setActiveNav('model');
+    } else {
+      setActiveNav('omo-presets');
+    }
+  };
+
+  // 判断当前模式是否正在加载
+  const isCurrentModeLoading = configMode === 'opencode' ? isOpenCodeLoading : isOmoLoading;
+
   const renderContent = () => {
+    // 显示加载动画
+    if (isCurrentModeLoading) {
+      return <LoadingOverlay message={configMode === 'opencode' ? '正在加载 OpenCode 配置...' : '正在加载 Oh My OpenCode 配置...'} />;
+    }
+    // OpenCode 模式
+    if (configMode === 'opencode') {
+      switch (activeNav) {
+        case 'model':
+          return <ModelConfig />;
+        case 'provider':
+          return <ProviderConfig />;
+        case 'agent':
+          return <AgentManager />;
+        case 'permission':
+          return <PermissionEditor />;
+        case 'mcp':
+          return <McpServerConfig />;
+        case 'keybinds':
+          return <KeybindEditor />;
+        case 'theme':
+          return <ThemeSelector />;
+        case 'plugin':
+          return <PluginManager />;
+        case 'instructions':
+          return <InstructionsEditor />;
+        case 'tui':
+          return <TuiConfigPanel />;
+        case 'server':
+          return <ServerConfigPanel />;
+        case 'lsp':
+          return <LspConfigPanel />;
+        case 'formatter':
+          return <FormatterConfigPanel />;
+        case 'compaction':
+          return <CompactionConfigPanel />;
+        case 'experimental':
+          return <ExperimentalConfigPanel />;
+        case 'misc':
+          return <MiscConfigPanel />;
+        case 'settings':
+          return <OtherSettings />;
+        default:
+          return <ModelConfig />;
+      }
+    }
+
+    // Oh My OpenCode 模式
     switch (activeNav) {
-      case 'model':
-        return <ModelConfig />;
-      case 'provider':
-        return <ProviderConfig />;
-      case 'agent':
-        return <AgentManager />;
-      case 'permission':
-        return <PermissionEditor />;
-      case 'mcp':
-        return <McpServerConfig />;
-      case 'keybinds':
-        return <KeybindEditor />;
-      case 'theme':
-        return <ThemeSelector />;
-      case 'plugin':
-        return <PluginManager />;
-      case 'instructions':
-        return <InstructionsEditor />;
-      case 'tui':
-        return <TuiConfigPanel />;
-      case 'server':
-        return <ServerConfigPanel />;
-      case 'lsp':
-        return <LspConfigPanel />;
-      case 'formatter':
-        return <FormatterConfigPanel />;
-      case 'compaction':
-        return <CompactionConfigPanel />;
-      case 'experimental':
-        return <ExperimentalConfigPanel />;
-      case 'misc':
-        return <MiscConfigPanel />;
-      case 'settings':
-        return <OtherSettings />;
+      case 'omo-presets':
+        return <OmoPresetsPanel />;
+      case 'omo-agents':
+        return <OmoAgentsPanel />;
+      case 'omo-categories':
+        return <OmoCategoriesPanel />;
+      case 'omo-background':
+        return <OmoBackgroundPanel />;
+      case 'omo-tmux':
+        return <OmoTmuxPanel />;
+      case 'omo-sisyphus':
+        return <OmoSisyphusPanel />;
+      case 'omo-disabled':
+        return <OmoDisabledPanel />;
+      case 'omo-claude-code':
+        return <OmoClaudeCodePanel />;
+      case 'omo-experimental':
+        return <OmoExperimentalPanel />;
       default:
-        return <ModelConfig />;
+        return <OmoPresetsPanel />;
     }
   };
 
@@ -101,15 +160,17 @@ export default function App() {
         onItemChange={setActiveNav}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
+        configMode={configMode}
       />
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <Header
+          configMode={configMode}
+          onConfigModeChange={handleConfigModeChange}
           onImport={() => setShowImportExport('import')}
           onExport={() => setShowImportExport('export')}
-          onReset={resetConfig}
           onTemplates={() => setShowTemplates(true)}
         />
 

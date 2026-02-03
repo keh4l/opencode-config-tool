@@ -2,13 +2,13 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
 **一个现代化的 OpenCode 配置管理工具，让配置变得简单高效**
 
-[功能特性](#-功能特性) • [安装说明](#-安装说明) • [使用指南](#-使用指南) • [开发文档](#-开发指南)
+[功能特性](#-功能特性) • [安装说明](#-安装说明) • [使用指南](#-使用指南) • [更新日志](CHANGELOG.md) • [开发文档](#-开发指南)
 
 </div>
 
@@ -795,6 +795,18 @@ SOFTWARE.
 - **项目主页**：[GitHub Repository](https://github.com/a246145/opencode-config-tool)
 - **问题反馈**：[GitHub Issues](https://github.com/a246145/opencode-config-tool/issues)
 - **功能建议**：[GitHub Discussions](https://github.com/a246145/opencode-config-tool/discussions)
+
+---
+
+## 📋 更新日志
+
+查看完整的版本更新历史和变更记录：**[CHANGELOG.md](CHANGELOG.md)**
+
+### 最新版本 v1.0.2 (2026-02-03)
+- ✨ **Oh My OpenCode 独立配置模式** - 顶部 Tab 切换，独立侧边栏和操作按钮
+- ✨ **9 个独立配置面板** - 快速预设、Agents、Categories、后台任务、Tmux、Sisyphus、禁用功能、Claude Code、实验性功能
+- ✨ **WebUI 加载动画** - 配置加载时显示加载状态
+- 🐛 修复多个 UI 显示问题和 WebUI 服务器兼容性问题
 
 ---
 

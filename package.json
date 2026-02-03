@@ -1,6 +1,6 @@
 {
   "name": "opencode-config-tool",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "OpenCode Configuration Tool",
   "main": "dist-electron/main.js",
   "type": "module",

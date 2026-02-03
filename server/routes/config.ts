@@ -1,8 +1,13 @@
 // server/routes/config.ts
 import { Router, Request, Response } from 'express';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
+import { fileURLToPath } from 'url';
+
+// ES modules 中获取 __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 

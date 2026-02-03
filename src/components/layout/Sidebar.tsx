@@ -20,9 +20,16 @@ import {
   Minimize2,
   FlaskConical,
   MoreHorizontal,
+  Sparkles,
+  Zap,
+  Layers,
+  Terminal,
+  Ban,
+  Settings2,
 } from 'lucide-react';
 
-export type NavItem =
+// OpenCode 导航项类型
+export type OpenCodeNavItem =
   | 'model'
   | 'provider'
   | 'agent'
@@ -41,14 +48,34 @@ export type NavItem =
   | 'experimental'
   | 'misc';
 
+// Oh My OpenCode 导航项类型
+export type OmoNavItem =
+  | 'omo-presets'
+  | 'omo-agents'
+  | 'omo-categories'
+  | 'omo-background'
+  | 'omo-tmux'
+  | 'omo-sisyphus'
+  | 'omo-disabled'
+  | 'omo-claude-code'
+  | 'omo-experimental';
+
+// 统一导航项类型
+export type NavItem = OpenCodeNavItem | OmoNavItem;
+
+// 配置模式类型
+export type ConfigMode = 'opencode' | 'oh-my-opencode';
+
 interface SidebarProps {
   activeItem: NavItem;
   onItemChange: (item: NavItem) => void;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  configMode: ConfigMode;
 }
 
-const navItems: { id: NavItem; label: string; icon: React.ElementType }[] = [
+// OpenCode 导航项
+const openCodeNavItems: { id: OpenCodeNavItem; label: string; icon: React.ElementType }[] = [
   { id: 'model', label: '模型配置', icon: Cpu },
   { id: 'provider', label: '模型提供商', icon: Server },
   { id: 'agent', label: '智能体', icon: Bot },
@@ -68,7 +95,23 @@ const navItems: { id: NavItem; label: string; icon: React.ElementType }[] = [
   { id: 'settings', label: '其他设置', icon: Settings },
 ];
 
-export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollapsedChange }: SidebarProps) {
+// Oh My OpenCode 导航项
+const omoNavItems: { id: OmoNavItem; label: string; icon: React.ElementType }[] = [
+  { id: 'omo-presets', label: '快速预设', icon: Zap },
+  { id: 'omo-agents', label: 'Agents 模型覆盖', icon: Bot },
+  { id: 'omo-categories', label: 'Categories 分类', icon: Layers },
+  { id: 'omo-background', label: '后台任务', icon: Settings2 },
+  { id: 'omo-tmux', label: 'Tmux 集成', icon: Terminal },
+  { id: 'omo-sisyphus', label: 'Sisyphus Agent', icon: Bot },
+  { id: 'omo-disabled', label: '禁用功能', icon: Ban },
+  { id: 'omo-claude-code', label: 'Claude Code 兼容', icon: Settings2 },
+  { id: 'omo-experimental', label: '实验性功能', icon: FlaskConical },
+];
+
+export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollapsedChange, configMode }: SidebarProps) {
+  const navItems = configMode === 'opencode' ? openCodeNavItems : omoNavItems;
+  const title = configMode === 'opencode' ? 'OpenCode 配置' : 'Oh My OpenCode';
+
   return (
     <aside
       className={cn(
@@ -82,9 +125,12 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
       {/* Logo */}
       <div className="flex items-center justify-between h-12 px-4 border-b border-border">
         {!collapsed && (
-          <span className="text-lg font-semibold text-foreground">
-            OpenCode 配置
-          </span>
+          <div className="flex items-center gap-2">
+            {configMode === 'oh-my-opencode' && <Sparkles className="h-4 w-4 text-purple-500" />}
+            <span className="text-lg font-semibold text-foreground">
+              {title}
+            </span>
+          </div>
         )}
         <Button
           variant="ghost"
@@ -124,7 +170,7 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
       <div className="p-4 border-t border-border">
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
-            v1.0.0
+            v1.0.2
           </p>
         )}
       </div>

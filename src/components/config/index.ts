@@ -19,3 +19,5 @@ export { ExperimentalConfigPanel } from './ExperimentalConfig';
 export { LspConfigPanel } from './LspConfig';
 export { FormatterConfigPanel } from './FormatterConfig';
 export { MiscConfigPanel } from './MiscConfig';
+// Oh My OpenCode 组件
+export * from './omo';

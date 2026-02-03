@@ -150,7 +150,7 @@ export const useConfigStore = create<ConfigState>()(
             }
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-              throw new Error('服务器返回非 JSON 响应，请确保 WebUI 服务器正在运行');
+              throw new Error('WebUI 服务器未运行，请先执行 npm run server:dev');
             }
             configJson = await response.text();
           }

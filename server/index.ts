@@ -2,7 +2,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import configRoutes from './routes/config';
+
+// ES modules 中获取 __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
