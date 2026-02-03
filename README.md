@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
@@ -34,6 +34,9 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 
 #### 🤖 模型配置
 - 选择主模型和小模型
+- 快速选择目标切换（点击输入框选择填充目标）
+- 从已配置的 Provider 动态获取可用模型
+- 模型使用状态标签（显示哪些模型被选为默认/小模型）
 - 配置模型参数（温度、推理强度等）
 - 设置上下文和输出限制
 - 支持思维模式配置
@@ -231,6 +234,10 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 ##### 📊 模型配置
 - **主模型**：选择默认使用的 AI 模型
 - **小模型**：选择用于简单任务的轻量级模型
+- **快速选择**：从已配置的 Provider 中选择模型
+  - 点击输入框切换填充目标（默认模型/小模型）
+  - 模型按 Provider 分组显示
+  - 显示模型使用状态标签
 - **模型选项**：配置温度、推理强度等参数
 
 ##### 🔌 Provider 配置
@@ -785,9 +792,9 @@ SOFTWARE.
 
 ## 📞 联系方式
 
-- **项目主页**：[GitHub Repository](https://github.com/your-repo/opencode-config-tool)
-- **问题反馈**：[GitHub Issues](https://github.com/your-repo/opencode-config-tool/issues)
-- **功能建议**：[GitHub Discussions](https://github.com/your-repo/opencode-config-tool/discussions)
+- **项目主页**：[GitHub Repository](https://github.com/a246145/opencode-config-tool)
+- **问题反馈**：[GitHub Issues](https://github.com/a246145/opencode-config-tool/issues)
+- **功能建议**：[GitHub Discussions](https://github.com/a246145/opencode-config-tool/discussions)
 
 ---
 

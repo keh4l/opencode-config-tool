@@ -57,3 +57,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* macOS Traffic Light / Window Drag Region */
+@layer components {
+  .app-drag-region {
+    -webkit-app-region: drag;
+  }
+
+  .app-no-drag {
+    -webkit-app-region: no-drag;
+  }
+}

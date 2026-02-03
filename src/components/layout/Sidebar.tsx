@@ -76,8 +76,11 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
         collapsed ? 'w-16' : 'w-64'
       )}
     >
+      {/* macOS Traffic Light Spacer - 为红绿灯按钮预留空间 */}
+      <div className="h-8 flex-shrink-0 app-drag-region" />
+
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+      <div className="flex items-center justify-between h-12 px-4 border-b border-border">
         {!collapsed && (
           <span className="text-lg font-semibold text-foreground">
             OpenCode 配置

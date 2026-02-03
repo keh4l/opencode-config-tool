@@ -1,3 +1,4 @@
+AGENTS.md
 # Logs
 logs
 *.log
@@ -14,6 +15,8 @@ dist-ssr
 *.local
 
 # Editor directories and files
+.omc/*
+.claude/*
 .vscode/*
 !.vscode/extensions.json
 .idea

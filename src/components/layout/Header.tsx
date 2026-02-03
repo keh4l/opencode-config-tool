@@ -40,7 +40,11 @@ export function Header({ onImport, onExport, onReset, onTemplates }: HeaderProps
   const ThemeIcon = themeIcons[theme];
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-card border-b border-border">
+    <header className="flex flex-col bg-card border-b border-border">
+      {/* macOS Traffic Light Spacer - 为红绿灯按钮预留空间 */}
+      <div className="h-8 flex-shrink-0 app-drag-region" />
+
+      <div className="flex items-center justify-between h-12 px-6">
       {/* Left: Title and Config Path */}
       <div className="flex items-center gap-3">
         <FileJson className="h-6 w-6 text-blue-500" />
@@ -119,6 +123,7 @@ export function Header({ onImport, onExport, onReset, onTemplates }: HeaderProps
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
       </div>
     </header>
   );
