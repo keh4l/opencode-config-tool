@@ -198,6 +198,7 @@ export default function App() {
 
       <ImportExportDialog
         mode={showImportExport}
+        configMode={configMode}
         onClose={() => setShowImportExport(null)}
       />
 

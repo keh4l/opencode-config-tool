@@ -1,6 +1,7 @@
 // src/components/ImportExportDialog.tsx
 import { useState } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
+import { useOhMyOpenCodeStore } from '@/hooks/useOhMyOpenCode';
 import {
   Dialog,
   DialogContent,
@@ -13,26 +14,41 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Download, Copy, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import type { ConfigMode } from '@/components/layout/Sidebar';
 
 interface ImportExportDialogProps {
   mode: 'import' | 'export' | null;
+  configMode: ConfigMode;
   onClose: () => void;
 }
 
-export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
-  const { exportConfig, importConfig } = useConfigStore();
+export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDialogProps) {
+  const openCodeStore = useConfigStore();
+  const omoStore = useOhMyOpenCodeStore();
   const { toast } = useToast();
   const [importText, setImportText] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const exportJson = mode === 'export' ? exportConfig() : '';
+  const isOpenCodeMode = configMode === 'opencode';
+  const configName = isOpenCodeMode ? 'OpenCode' : 'Oh My OpenCode';
+  const fileName = isOpenCodeMode ? 'opencode.json' : 'oh-my-opencode.json';
+
+  // 根据模式选择对应的导出函数
+  const exportJson = mode === 'export'
+    ? (isOpenCodeMode ? openCodeStore.exportConfig() : JSON.stringify(omoStore.config, null, 2))
+    : '';
 
   const handleImport = () => {
     try {
-      importConfig(importText);
+      if (isOpenCodeMode) {
+        openCodeStore.importConfig(importText);
+      } else {
+        const parsed = JSON.parse(importText);
+        omoStore.setConfig(parsed);
+      }
       toast({
         title: '导入成功',
-        description: '配置已成功导入',
+        description: `${configName} 配置已成功导入`,
       });
       onClose();
     } catch (error) {
@@ -50,7 +66,7 @@ export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
     setTimeout(() => setCopied(false), 2000);
     toast({
       title: '已复制',
-      description: '配置已复制到剪贴板',
+      description: `${configName} 配置已复制到剪贴板`,
     });
   };
 
@@ -59,7 +75,7 @@ export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'opencode.json';
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -72,19 +88,19 @@ export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
             {mode === 'import' ? (
               <>
                 <Upload className="h-5 w-5" />
-                导入配置
+                导入 {configName} 配置
               </>
             ) : (
               <>
                 <Download className="h-5 w-5" />
-                导出配置
+                导出 {configName} 配置
               </>
             )}
           </DialogTitle>
           <DialogDescription>
             {mode === 'import'
-              ? '粘贴 JSON 配置内容导入'
-              : '复制或下载当前配置'}
+              ? `粘贴 ${configName} JSON 配置内容导入`
+              : `复制或下载当前 ${configName} 配置`}
           </DialogDescription>
         </DialogHeader>
 
@@ -93,7 +109,10 @@ export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
             <Textarea
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              placeholder='{"$schema": "https://opencode.ai/config.json", ...}'
+              placeholder={isOpenCodeMode
+                ? '{"$schema": "https://opencode.ai/config.json", ...}'
+                : '{"$schema": "https://raw.githubusercontent.com/...", ...}'
+              }
               rows={15}
               className="font-mono text-sm"
             />
@@ -125,7 +144,7 @@ export function ImportExportDialog({ mode, onClose }: ImportExportDialogProps) {
           ) : (
             <Button onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" />
-              下载文件
+              下载 {fileName}
             </Button>
           )}
         </DialogFooter>

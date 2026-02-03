@@ -154,10 +154,16 @@ export function OmoAgentsPanel() {
                         <SelectItem value="_none">不覆盖（使用默认）</SelectItem>
                         {Object.entries(modelsByProvider).map(([providerId, models]) => (
                           <SelectGroup key={providerId}>
-                            <SelectLabel>{models[0]?.providerName || providerId}</SelectLabel>
+                            <SelectLabel className="flex items-center gap-2 text-xs font-semibold text-primary bg-muted/50 px-2 py-1.5 -mx-1 rounded">
+                              <span className="w-2 h-2 rounded-full bg-primary"></span>
+                              {models[0]?.providerName || providerId}
+                            </SelectLabel>
                             {models.map((model) => (
-                              <SelectItem key={model.fullId} value={model.fullId}>
+                              <SelectItem key={model.fullId} value={model.fullId} className="pl-6">
                                 {model.modelName}
+                                <span className="ml-2 text-xs text-muted-foreground font-mono">
+                                  {model.modelId}
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectGroup>
