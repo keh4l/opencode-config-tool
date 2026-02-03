@@ -31,6 +31,7 @@ import {
   OmoExperimentalPanel,
 } from '@/components/config';
 import { TemplateDialog } from '@/components/TemplateDialog';
+import { OmoPresetsDialog } from '@/components/OmoPresetsDialog';
 import { JsonPreview } from '@/components/JsonPreview';
 import { ImportExportDialog } from '@/components/ImportExportDialog';
 import { useConfigStore } from '@/hooks/useConfig';
@@ -43,6 +44,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>('model');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showOmoPresets, setShowOmoPresets] = useState(false);
   const [showImportExport, setShowImportExport] = useState<'import' | 'export' | null>(null);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
 
@@ -172,6 +174,7 @@ export default function App() {
           onImport={() => setShowImportExport('import')}
           onExport={() => setShowImportExport('export')}
           onTemplates={() => setShowTemplates(true)}
+          onOmoPresets={() => setShowOmoPresets(true)}
         />
 
         {/* Content */}
@@ -189,6 +192,11 @@ export default function App() {
       <TemplateDialog
         open={showTemplates}
         onOpenChange={setShowTemplates}
+      />
+
+      <OmoPresetsDialog
+        open={showOmoPresets}
+        onOpenChange={setShowOmoPresets}
       />
 
       <ImportExportDialog

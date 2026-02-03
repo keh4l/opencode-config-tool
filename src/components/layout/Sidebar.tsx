@@ -98,11 +98,11 @@ const openCodeNavItems: { id: OpenCodeNavItem; label: string; icon: React.Elemen
 // Oh My OpenCode 导航项
 const omoNavItems: { id: OmoNavItem; label: string; icon: React.ElementType }[] = [
   { id: 'omo-presets', label: '快速预设', icon: Zap },
-  { id: 'omo-agents', label: 'Agents 模型覆盖', icon: Bot },
-  { id: 'omo-categories', label: 'Categories 分类', icon: Layers },
+  { id: 'omo-agents', label: '代理模型覆盖', icon: Bot },
+  { id: 'omo-categories', label: '任务分类模型', icon: Layers },
   { id: 'omo-background', label: '后台任务', icon: Settings2 },
   { id: 'omo-tmux', label: 'Tmux 集成', icon: Terminal },
-  { id: 'omo-sisyphus', label: 'Sisyphus Agent', icon: Bot },
+  { id: 'omo-sisyphus', label: '西西弗斯代理', icon: Bot },
   { id: 'omo-disabled', label: '禁用功能', icon: Ban },
   { id: 'omo-claude-code', label: 'Claude Code 兼容', icon: Settings2 },
   { id: 'omo-experimental', label: '实验性功能', icon: FlaskConical },
