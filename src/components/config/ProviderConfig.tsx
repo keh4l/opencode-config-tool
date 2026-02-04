@@ -1025,12 +1025,13 @@ export function ProviderConfig() {
                                         value={model.options?.thinking?.type || ''}
                                         onValueChange={(value) => {
                                           if (value === 'enabled') {
-                                            // 启用时自动设置默认思考预算
+                                            // 启用时强制设置默认思考预算 10000
+                                            const currentBudget = model.options?.thinking?.budgetTokens;
                                             handleUpdateModel(modelId, 'options', {
                                               ...model.options,
                                               thinking: {
                                                 type: 'enabled',
-                                                budgetTokens: model.options?.thinking?.budgetTokens || 10000,
+                                                budgetTokens: (currentBudget && currentBudget > 0) ? currentBudget : 10000,
                                               },
                                             });
                                           } else if (value === 'disabled') {

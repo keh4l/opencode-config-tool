@@ -31,7 +31,7 @@ function createWindow(): void {
     minWidth: 1024,
     minHeight: 768,
     show: false, // 等待加载完成后再显示
-    title: 'OMO 配置',
+    title: 'OpenCode Config Tool',
     webPreferences: {
       preload: path.join(__dirname, '../electron/preload.cjs'),
       contextIsolation: true,
