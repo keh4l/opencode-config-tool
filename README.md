@@ -597,7 +597,6 @@ opencode-config-tool/
 ├── 📄 vite.config.ts        # Vite 配置
 ├── 📄 tailwind.config.js    # Tailwind 配置
 ├── 📄 tsconfig.json         # TypeScript 配置
-├── 📄 CLAUDE.md             # Claude Code 指令
 ├── 📄 CHANGELOG.md          # 更新日志
 └── 📄 README.md             # 本文档
 ```

@@ -1060,13 +1060,15 @@ export function ProviderConfig() {
                                       <Label className="text-xs">思考预算 (Token 数)</Label>
                                       <Input
                                         type="number"
-                                        value={model.options?.thinking?.budgetTokens || ''}
+                                        value={model.options?.thinking?.type === 'enabled'
+                                          ? (model.options?.thinking?.budgetTokens || 10000)
+                                          : ''}
                                         onChange={(e) => handleUpdateModel(modelId, 'options', {
                                           ...model.options,
                                           thinking: {
                                             ...model.options?.thinking,
                                             type: model.options?.thinking?.type || 'enabled',
-                                            budgetTokens: parseInt(e.target.value) || undefined,
+                                            budgetTokens: parseInt(e.target.value) || 10000,
                                           },
                                         })}
                                         placeholder="10000"
