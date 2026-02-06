@@ -356,13 +356,13 @@ export function AgentManager() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="primary">主智能体 (Primary)</SelectItem>
-                      <SelectItem value="subagent">子智能体 (Subagent)</SelectItem>
-                      <SelectItem value="all">全部 (All)</SelectItem>
+                      <SelectItem value="primary">主智能体</SelectItem>
+                      <SelectItem value="subagent">子智能体</SelectItem>
+                      <SelectItem value="all">全部</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Primary: 可直接调用 | Subagent: 仅作为子任务 | All: 两者皆可
+                    主智能体：可直接调用 | 子智能体：仅作为子任务 | 全部：两者皆可
                   </p>
                 </div>
               </div>
@@ -384,7 +384,7 @@ export function AgentManager() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agent-variant">变体 (Variant)</Label>
+                    <Label htmlFor="agent-variant">变体</Label>
                     <Input
                       id="agent-variant"
                       value={editingAgent.variant}
@@ -396,7 +396,7 @@ export function AgentManager() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>温度 (Temperature): {editingAgent.temperature.toFixed(1)}</Label>
+                    <Label>温度：{editingAgent.temperature.toFixed(1)}</Label>
                     <span className="text-xs text-muted-foreground">
                       {editingAgent.temperature < 0.3 ? '精确' : editingAgent.temperature < 0.6 ? '平衡' : '创意'}
                     </span>
@@ -412,7 +412,7 @@ export function AgentManager() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>Top-P 采样: {editingAgent.top_p.toFixed(2)}</Label>
+                    <Label>采样概率（Top P）：{editingAgent.top_p.toFixed(2)}</Label>
                     <span className="text-xs text-muted-foreground">
                       控制输出多样性
                     </span>
@@ -535,7 +535,7 @@ export function AgentManager() {
                 </Label>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <Label htmlFor="tool-write" className="font-normal">写入 (Write)</Label>
+                    <Label htmlFor="tool-write" className="font-normal">写入</Label>
                     <Switch
                       id="tool-write"
                       checked={editingAgent.tools.write}
@@ -546,7 +546,7 @@ export function AgentManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <Label htmlFor="tool-edit" className="font-normal">编辑 (Edit)</Label>
+                    <Label htmlFor="tool-edit" className="font-normal">编辑</Label>
                     <Switch
                       id="tool-edit"
                       checked={editingAgent.tools.edit}
@@ -557,7 +557,7 @@ export function AgentManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <Label htmlFor="tool-bash" className="font-normal">命令行 (Bash)</Label>
+                    <Label htmlFor="tool-bash" className="font-normal">命令行</Label>
                     <Switch
                       id="tool-bash"
                       checked={editingAgent.tools.bash}

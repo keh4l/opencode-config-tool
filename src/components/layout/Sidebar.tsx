@@ -107,7 +107,7 @@ const omoNavItems: { id: OmoNavItem; label: string; icon: React.ElementType }[] 
 
 export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollapsedChange, configMode }: SidebarProps) {
   const navItems = configMode === 'opencode' ? openCodeNavItems : omoNavItems;
-  const title = configMode === 'opencode' ? 'OpenCode配置' : 'OMO 配置';
+  const title = configMode === 'opencode' ? 'OpenCode 配置' : 'OMO 配置';
 
   return (
     <aside

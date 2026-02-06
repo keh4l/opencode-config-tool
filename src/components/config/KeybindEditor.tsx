@@ -156,7 +156,7 @@ export function KeybindEditor() {
                               value={currentValue as string}
                               onChange={(e) => handleKeybindChange(key, e.target.value)}
                               className="w-48 font-mono text-sm"
-                              placeholder="none (禁用)"
+            placeholder="none（禁用）"
                             />
                             {isModified && (
                               <Button
@@ -185,10 +185,10 @@ export function KeybindEditor() {
           <div>
             <h4 className="font-medium mb-2">修饰键</h4>
             <ul className="space-y-1 text-muted-foreground">
-              <li><code className="text-blue-500">ctrl</code> - Control 键</li>
-              <li><code className="text-blue-500">alt</code> - Alt/Option 键</li>
-              <li><code className="text-blue-500">shift</code> - Shift 键</li>
-              <li><code className="text-blue-500">super</code> - Win/Cmd 键</li>
+            <li><code className="text-blue-500">ctrl</code> - Ctrl 键</li>
+            <li><code className="text-blue-500">alt</code> - Alt/Option 键</li>
+            <li><code className="text-blue-500">shift</code> - Shift 键</li>
+            <li><code className="text-blue-500">super</code> - Win/Cmd 键</li>
             </ul>
           </div>
           <div>

@@ -121,21 +121,21 @@ export function MiscConfigPanel() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="default-agent">默认 Agent</Label>
+            <Label htmlFor="default-agent">默认智能体</Label>
             <Select
               value={config.default_agent || 'build'}
               onValueChange={(value) => updateConfig({ default_agent: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="选择默认 Agent" />
+                <SelectValue placeholder="选择默认智能体" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="build">Build (构建)</SelectItem>
-                <SelectItem value="plan">Plan (规划)</SelectItem>
+                <SelectItem value="build">构建（build）</SelectItem>
+                <SelectItem value="plan">规划（plan）</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              启动时使用的默认主 Agent
+              启动时使用的默认主智能体
             </p>
           </div>
 
@@ -159,10 +159,10 @@ export function MiscConfigPanel() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            Provider 过滤
+            提供商过滤
           </CardTitle>
           <CardDescription>
-            控制哪些 Provider 被加载
+            控制哪些提供商会被加载
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -170,17 +170,17 @@ export function MiscConfigPanel() {
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <Ban className="h-4 w-4" />
-              禁用的 Providers
+              禁用的提供商
             </Label>
             <p className="text-xs text-muted-foreground">
-              这些 Provider 将不会被加载
+              这些提供商将不会被加载
             </p>
             
             <div className="flex gap-2">
               <Input
                 value={newDisabledProvider}
                 onChange={(e) => setNewDisabledProvider(e.target.value)}
-                placeholder="provider 名称"
+                placeholder="提供商名称"
                 onKeyDown={(e) => e.key === 'Enter' && addDisabledProvider()}
               />
               <Button onClick={addDisabledProvider} size="icon" variant="outline">
@@ -206,17 +206,17 @@ export function MiscConfigPanel() {
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              仅启用的 Providers (白名单)
+              仅启用的提供商（白名单）
             </Label>
             <p className="text-xs text-muted-foreground">
-              设置后，只有这些 Provider 会被启用，其他全部忽略
+              设置后，只有这些提供商会被启用，其他全部忽略
             </p>
             
             <div className="flex gap-2">
               <Input
                 value={newEnabledProvider}
                 onChange={(e) => setNewEnabledProvider(e.target.value)}
-                placeholder="provider 名称"
+                placeholder="提供商名称"
                 onKeyDown={(e) => e.key === 'Enter' && addEnabledProvider()}
               />
               <Button onClick={addEnabledProvider} size="icon" variant="outline">
@@ -335,7 +335,7 @@ export function MiscConfigPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Label htmlFor="enterprise-url">企业版 URL</Label>
+          <Label htmlFor="enterprise-url">企业版地址</Label>
           <Input
             id="enterprise-url"
             value={config.enterprise?.url || ''}
@@ -370,15 +370,15 @@ export function MiscConfigPanel() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DEBUG">DEBUG</SelectItem>
-                  <SelectItem value="INFO">INFO</SelectItem>
-                  <SelectItem value="WARN">WARN</SelectItem>
-                  <SelectItem value="ERROR">ERROR</SelectItem>
+                  <SelectItem value="DEBUG">调试（DEBUG）</SelectItem>
+                  <SelectItem value="INFO">信息（INFO）</SelectItem>
+                  <SelectItem value="WARN">警告（WARN）</SelectItem>
+                  <SelectItem value="ERROR">错误（ERROR）</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>布局模式 (Deprecated)</Label>
+              <Label>布局模式（已废弃）</Label>
               <Select
                 value={config.layout || 'auto'}
                 onValueChange={(value: 'auto' | 'stretch') => updateConfig({ layout: value })}
@@ -387,8 +387,8 @@ export function MiscConfigPanel() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">auto</SelectItem>
-                  <SelectItem value="stretch">stretch</SelectItem>
+                  <SelectItem value="auto">自动（auto）</SelectItem>
+                  <SelectItem value="stretch">拉伸（stretch）</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -396,7 +396,7 @@ export function MiscConfigPanel() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>自动分享 (Deprecated)</Label>
+              <Label>自动分享（已废弃）</Label>
               <p className="text-xs text-muted-foreground">使用 share 字段替代</p>
             </div>
             <Switch
@@ -406,7 +406,7 @@ export function MiscConfigPanel() {
           </div>
 
           <div>
-            <Label>工具开关 (Deprecated)</Label>
+            <Label>工具开关（已废弃）</Label>
             <div className="mt-2 grid grid-cols-4 gap-2">
               {TOOL_PERMISSIONS.map((tool) => (
                 <div key={tool} className="flex items-center justify-between p-2 bg-muted/50 rounded">
@@ -423,7 +423,7 @@ export function MiscConfigPanel() {
           </div>
 
           <div>
-            <Label>命令配置 (JSON)</Label>
+            <Label>命令配置（JSON）</Label>
             <Textarea
               className="mt-1 font-mono text-xs"
               rows={4}
@@ -449,7 +449,7 @@ export function MiscConfigPanel() {
           </div>
 
           <div>
-            <Label>兼容模式配置 (JSON)</Label>
+            <Label>兼容模式配置（JSON）</Label>
             <Textarea
               className="mt-1 font-mono text-xs"
               rows={4}

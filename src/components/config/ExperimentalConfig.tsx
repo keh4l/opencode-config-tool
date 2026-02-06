@@ -39,7 +39,7 @@ export function ExperimentalConfigPanel() {
         <CardTitle className="flex items-center gap-2">
           <FlaskConical className="h-5 w-5" />
           实验性功能
-          <Badge variant="outline" className="ml-2">Beta</Badge>
+          <Badge variant="outline" className="ml-2">测试版</Badge>
         </CardTitle>
         <CardDescription>
           这些功能仍在测试中，可能不稳定或在未来版本中更改
@@ -56,7 +56,7 @@ export function ExperimentalConfigPanel() {
         {/* Batch Tool */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>批量工具 (Batch Tool)</Label>
+            <Label>批量工具</Label>
             <p className="text-xs text-muted-foreground">
               启用批量执行多个工具调用
             </p>
@@ -70,7 +70,7 @@ export function ExperimentalConfigPanel() {
         {/* OpenTelemetry */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>OpenTelemetry</Label>
+            <Label>可观测性（OpenTelemetry）</Label>
             <p className="text-xs text-muted-foreground">
               启用 AI SDK 调用的遥测追踪
             </p>
@@ -86,7 +86,7 @@ export function ExperimentalConfigPanel() {
           <div className="space-y-0.5">
             <Label>拒绝后继续循环</Label>
             <p className="text-xs text-muted-foreground">
-              工具调用被拒绝后继续 agent 循环
+              工具调用被拒绝后继续智能体循环
             </p>
           </div>
           <Switch
@@ -111,7 +111,7 @@ export function ExperimentalConfigPanel() {
 
         {/* MCP Timeout */}
         <div className="space-y-2">
-          <Label htmlFor="mcp-timeout">MCP 超时时间 (毫秒)</Label>
+          <Label htmlFor="mcp-timeout">MCP 超时时间（毫秒）</Label>
           <Input
             id="mcp-timeout"
             type="number"

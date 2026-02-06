@@ -34,7 +34,7 @@ export function PluginManager() {
           <Input
             value={newPlugin}
             onChange={(e) => setNewPlugin(e.target.value)}
-            placeholder="./custom-plugin.ts 或 npm-package-name"
+            placeholder="./custom-plugin.ts 或 npm 包名"
             className="flex-1"
           />
           <Button onClick={handleAddPlugin} disabled={!newPlugin}>

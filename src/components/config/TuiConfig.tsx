@@ -77,14 +77,14 @@ export function TuiConfigPanel() {
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Layers className="h-4 w-4" />
-              Diff 显示样式
+              差异显示样式
             </Label>
             <Select
               value={tui.diff_style || 'auto'}
               onValueChange={(value: 'auto' | 'stacked') => updateTui({ diff_style: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="选择 Diff 样式" />
+                <SelectValue placeholder="选择差异样式" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="auto">自动 (根据终端宽度)</SelectItem>

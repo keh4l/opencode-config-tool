@@ -84,7 +84,7 @@ export default function App() {
   const renderContent = () => {
     // 显示加载动画
     if (isCurrentModeLoading) {
-      return <LoadingOverlay message={configMode === 'opencode' ? '正在加载 OpenCode 配置...' : '正在加载 Oh My OpenCode 配置...'} />;
+      return <LoadingOverlay message={configMode === 'opencode' ? '正在加载 OpenCode 配置...' : '正在加载 OMO 配置...'} />;
     }
     // OpenCode 模式
     if (configMode === 'opencode') {

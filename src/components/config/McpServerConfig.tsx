@@ -565,7 +565,7 @@ export function McpServerConfig() {
 
                   {/* Headers */}
                   <div className="space-y-3">
-                    <Label>自定义 Headers</Label>
+                  <Label>自定义请求头</Label>
                     <div className="flex gap-2">
                       <Input
                         value={newHeaderKey}
@@ -620,7 +620,7 @@ export function McpServerConfig() {
                     {editingMcp.oauthEnabled && (
                       <div className="space-y-3 pl-4 border-l-2 border-blue-500/20">
                         <div className="space-y-2">
-                          <Label>Client ID</Label>
+                          <Label>客户端 ID</Label>
                           <Input
                             value={editingMcp.oauth.clientId}
                             onChange={(e) => setEditingMcp({
@@ -631,7 +631,7 @@ export function McpServerConfig() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Client Secret</Label>
+                          <Label>客户端密钥</Label>
                           <Input
                             type="password"
                             value={editingMcp.oauth.clientSecret}
@@ -643,7 +643,7 @@ export function McpServerConfig() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Scope</Label>
+                          <Label>授权范围</Label>
                           <Input
                             value={editingMcp.oauth.scope}
                             onChange={(e) => setEditingMcp({

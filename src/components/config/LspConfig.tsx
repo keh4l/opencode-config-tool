@@ -137,7 +137,7 @@ export function LspConfigPanel() {
                 <Input
                   value={newServerId}
                   onChange={(e) => setNewServerId(e.target.value)}
-                  placeholder="服务器 ID (如 vue)"
+              placeholder="服务器 ID（如 vue）"
                   onKeyDown={(e) => e.key === 'Enter' && addCustomServer()}
                 />
                 <Button onClick={addCustomServer} size="icon" variant="outline">
@@ -182,7 +182,7 @@ export function LspConfigPanel() {
                                 ...serverConfig as LspServerConfig,
                                 command: e.target.value.split(' ').filter(Boolean),
                               })}
-                              placeholder="例如: vue-language-server --stdio"
+              placeholder="例如：vue-language-server --stdio"
                             />
                           </div>
                           <div className="space-y-2">
@@ -197,7 +197,7 @@ export function LspConfigPanel() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>初始化参数 (JSON)</Label>
+            <Label>初始化参数（JSON）</Label>
                             <Textarea
                               value={(serverConfig as LspServerConfig).initialization ? JSON.stringify((serverConfig as LspServerConfig).initialization, null, 2) : ''}
                               onChange={(e) => {

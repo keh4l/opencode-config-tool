@@ -46,7 +46,7 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
       return {
         json: '',
         isValid: false,
-        error: err instanceof Error ? err.message : 'Invalid JSON',
+        error: err instanceof Error ? err.message : '无效 JSON',
         size: '0 KB'
       };
     }
@@ -113,7 +113,7 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('复制失败:', err);
     }
   };
 
