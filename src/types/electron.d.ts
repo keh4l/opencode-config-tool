@@ -17,7 +17,10 @@ export interface ElectronAPI {
   writeFile: (path: string, content: string) => Promise<boolean>;
   openFileDialog: () => Promise<string | null>;
   saveFileDialog: (defaultPath?: string) => Promise<string | null>;
-  getOpencodeModels: (provider?: string) => Promise<string>;
+  getOpencodeModels: (provider?: string) => Promise<
+    | { ok: true; output: string }
+    | { ok: false; message: string; details?: string }
+  >;
 
   // Platform info
   platform: string;

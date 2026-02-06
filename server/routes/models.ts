@@ -34,6 +34,10 @@ type OpencodeCommand = {
   args: string[];
 };
 
+type OpencodeModelsResult =
+  | { ok: true; output: string }
+  | { ok: false; message: string; details?: string };
+
 const buildOpencodeCommands = (args: string[]): OpencodeCommand[] => {
   const commands: OpencodeCommand[] = [
     { command: 'opencode', args },
@@ -68,7 +72,8 @@ async function runOpencodeModels(provider?: string): Promise<string> {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         continue;
       }
-      throw error;
+      // 如果命令存在但执行失败，尝试后续候选命令（例如 npx opencode）
+      continue;
     }
   }
 
@@ -78,21 +83,59 @@ async function runOpencodeModels(provider?: string): Promise<string> {
   throw new Error('opencode command not found');
 }
 
+const formatOpencodeModelsError = (error: unknown): { message: string; details?: string } => {
+  const err = error as {
+    code?: unknown;
+    message?: unknown;
+    stderr?: unknown;
+  };
+
+  const code = typeof err?.code === 'string' ? err.code : undefined;
+  const stderr = typeof err?.stderr === 'string' ? err.stderr : '';
+  const rawMessage = typeof err?.message === 'string' ? err.message : '';
+
+  if (code === 'ENOENT') {
+    return {
+      message: '未找到 opencode 命令：请先安装 OpenCode 并确保终端可执行 `opencode models`。',
+      details: rawMessage || stderr || undefined,
+    };
+  }
+
+  if (stderr.includes('BuildMessage: ENOENT reading') || stderr.includes(`${path.sep}.cache${path.sep}opencode${path.sep}node_modules`)) {
+    const logMatch = stderr.match(/check log file at\s+(\S+)/i);
+    const logPath = logMatch?.[1];
+    const suffix = logPath ? `（日志：${logPath}）` : '';
+
+    return {
+      message: `opencode 执行失败（缓存依赖缺失）。建议删除 ~/.cache/opencode 后重试。${suffix}`,
+      details: stderr || rawMessage || undefined,
+    };
+  }
+
+  return {
+    message: rawMessage || '无法运行 `opencode models`，请检查 opencode 安装与运行环境。',
+    details: stderr || undefined,
+  };
+};
+
 /**
  * GET /api/models?provider=xxx
  * 读取 opencode models 输出
  */
 router.get('/', async (req: Request, res: Response) => {
+  const provider = req.query.provider as string | undefined;
+
+  let payload: OpencodeModelsResult;
   try {
-    const provider = req.query.provider as string | undefined;
     const output = await runOpencodeModels(provider);
-    res.json({ output });
+    payload = { ok: true, output };
   } catch (error) {
-    res.status(500).json({
-      error: 'Failed to run opencode models',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    const formatted = formatOpencodeModelsError(error);
+    payload = { ok: false, message: formatted.message, details: formatted.details };
   }
+
+  // 返回 200：由前端决定如何展示错误信息
+  res.json(payload);
 });
 
 export default router;

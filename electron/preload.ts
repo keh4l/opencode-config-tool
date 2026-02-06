@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isElectron: true,
 });
 
+type OpencodeModelsResult =
+  | { ok: true; output: string }
+  | { ok: false; message: string; details?: string };
+
 // 类型声明
 declare global {
   interface Window {
@@ -23,7 +27,7 @@ declare global {
       writeFile: (path: string, content: string) => Promise<boolean>;
       openFileDialog: () => Promise<string | null>;
       saveFileDialog: (defaultPath?: string) => Promise<string | null>;
-      getOpencodeModels: (provider?: string) => Promise<string>;
+      getOpencodeModels: (provider?: string) => Promise<OpencodeModelsResult>;
       platform: string;
       isElectron: boolean;
     };

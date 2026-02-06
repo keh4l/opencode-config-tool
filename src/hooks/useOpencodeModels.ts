@@ -7,6 +7,10 @@ export interface OpencodeModelInfo {
   fullId: string;
 }
 
+type OpencodeModelsResult =
+  | { ok: true; output: string }
+  | { ok: false; message: string; details?: string };
+
 const parseOpencodeModelsOutput = (output: string): OpencodeModelInfo[] => {
   const models: OpencodeModelInfo[] = [];
   const seen = new Set<string>();
@@ -50,14 +54,34 @@ export const useOpencodeModels = () => {
       let output = '';
 
       if (typeof window !== 'undefined' && window.electronAPI?.getOpencodeModels) {
-        output = await window.electronAPI.getOpencodeModels();
+        const result: OpencodeModelsResult = await window.electronAPI.getOpencodeModels();
+        if (!result.ok) {
+          throw new Error(result.message || '无法获取模型列表');
+        }
+        output = result.output || '';
       } else {
         const response = await fetch('/api/models');
+
+        const data = (await response.json().catch(() => ({}))) as unknown;
+
+        if (data && typeof data === 'object') {
+          const maybe = data as { ok?: unknown; output?: unknown; message?: unknown };
+          if (typeof maybe.ok === 'boolean') {
+            if (!maybe.ok) {
+              throw new Error(typeof maybe.message === 'string' ? maybe.message : '无法获取模型列表');
+            }
+            output = typeof maybe.output === 'string' ? maybe.output : '';
+          } else {
+            // Backward-compatible: { output } / { message }
+            const any = data as { output?: unknown; message?: unknown };
+            if (typeof any.output === 'string') output = any.output;
+            else if (typeof any.message === 'string') throw new Error(any.message);
+          }
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        const data = await response.json();
-        output = typeof data.output === 'string' ? data.output : '';
       }
 
       setModels(parseOpencodeModelsOutput(output));
