@@ -166,18 +166,11 @@ export const KNOWN_DISABLED_AGENTS = [
   { id: 'atlas', name: '阿特拉斯', description: '任务编排和多代理协调' },
 ];
 
-// 已知的 Skills 列表（前 3 个与 oh-my-opencode schema disabled_skills enum 对齐，其余为扩展）
+// 已知的 Skills 列表（与 oh-my-opencode schema disabled_skills enum 对齐）
 export const KNOWN_SKILLS = [
   { id: 'playwright', name: 'Playwright', description: '浏览器自动化测试' },
   { id: 'frontend-ui-ux', name: '前端 UI/UX', description: '前端界面开发' },
   { id: 'git-master', name: 'Git 大师', description: 'Git 版本控制操作' },
-  { id: 'typescript-programmer', name: 'TypeScript 程序员', description: 'TypeScript 开发' },
-  { id: 'python-programmer', name: 'Python 程序员', description: 'Python 开发' },
-  { id: 'rust-programmer', name: 'Rust 程序员', description: 'Rust 开发' },
-  { id: 'go-programmer', name: 'Go 程序员', description: 'Go 开发' },
-  { id: 'database-expert', name: '数据库专家', description: '数据库设计和优化' },
-  { id: 'devops', name: 'DevOps', description: '运维和部署' },
-  { id: 'security', name: '安全专家', description: '安全审计和漏洞检测' },
 ];
 
 export const KNOWN_COMMANDS = [

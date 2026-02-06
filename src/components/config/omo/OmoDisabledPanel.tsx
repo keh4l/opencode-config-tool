@@ -19,7 +19,7 @@ export function OmoDisabledPanel() {
   return (
     <ConfigCard
       title="禁用功能"
-      description="管理禁用的 Hooks、Agents、MCPs 和 Skills"
+      description="管理禁用的钩子、智能体、MCP 和技能"
       icon={Ban}
       badge={totalDisabled > 0 ? (
         <Badge variant="secondary">{totalDisabled} 个禁用</Badge>
@@ -28,7 +28,7 @@ export function OmoDisabledPanel() {
       <div className="space-y-6">
         {/* Hooks */}
         <div>
-          <Label className="mb-2 block text-base font-semibold">禁用的 Hooks</Label>
+          <Label className="mb-2 block text-base font-semibold">禁用的钩子（Hooks）</Label>
           <div className="space-y-2">
             {KNOWN_HOOKS.map((hook) => (
               <div key={hook.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
@@ -47,7 +47,7 @@ export function OmoDisabledPanel() {
 
         {/* Agents */}
         <div>
-          <Label className="mb-2 block text-base font-semibold">禁用的 Agents</Label>
+          <Label className="mb-2 block text-base font-semibold">禁用的智能体（Agents）</Label>
           <div className="space-y-2">
             {KNOWN_DISABLED_AGENTS.map((agent) => (
               <div key={agent.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
@@ -66,7 +66,7 @@ export function OmoDisabledPanel() {
 
         {/* MCPs */}
         <div>
-          <Label className="mb-2 block text-base font-semibold">禁用的 MCPs</Label>
+          <Label className="mb-2 block text-base font-semibold">禁用的 MCP（MCPs）</Label>
           <div className="space-y-2">
             {KNOWN_MCPS.map((mcp) => (
               <div key={mcp.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
@@ -85,7 +85,7 @@ export function OmoDisabledPanel() {
 
         {/* Skills */}
         <div>
-          <Label className="mb-2 block text-base font-semibold">禁用的 Skills</Label>
+          <Label className="mb-2 block text-base font-semibold">禁用的技能（Skills）</Label>
           <p className="text-xs text-muted-foreground mb-2">禁用后，该技能将不会被代理加载</p>
           <div className="space-y-2">
             {KNOWN_SKILLS.map((skill) => (
@@ -105,7 +105,7 @@ export function OmoDisabledPanel() {
 
         {/* Commands */}
         <div>
-          <Label className="mb-2 block text-base font-semibold">禁用的 Commands</Label>
+          <Label className="mb-2 block text-base font-semibold">禁用的命令（Commands）</Label>
           <p className="text-xs text-muted-foreground mb-2">禁用后，该命令将不可用</p>
           <div className="space-y-2">
             {KNOWN_COMMANDS.map((command) => (

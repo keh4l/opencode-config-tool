@@ -336,31 +336,31 @@ export function OmoExperimentalPanel() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs text-muted-foreground">Git Master - Commit Footer</Label>
-              <Switch
-                checked={config.git_master?.commit_footer ?? true}
-                onCheckedChange={(checked) => updateConfig({
-                  git_master: { ...config.git_master, commit_footer: checked }
-                })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Git Master：提交页脚（commit_footer）</Label>
+                <Switch
+                  checked={config.git_master?.commit_footer ?? true}
+                  onCheckedChange={(checked) => updateConfig({
+                    git_master: { ...config.git_master, commit_footer: checked }
+                  })}
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Git Master：协作者署名（Co-authored-by）</Label>
+                <Switch
+                  checked={config.git_master?.include_co_authored_by ?? true}
+                  onCheckedChange={(checked) => updateConfig({
+                    git_master: { ...config.git_master, include_co_authored_by: checked }
+                  })}
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Git Master - Co-authored-by</Label>
-              <Switch
-                checked={config.git_master?.include_co_authored_by ?? true}
-                onCheckedChange={(checked) => updateConfig({
-                  git_master: { ...config.git_master, include_co_authored_by: checked }
-                })}
-              />
-            </div>
-          </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Ralph Loop</Label>
+            <Label className="text-xs text-muted-foreground">Ralph 循环</Label>
             <div className="flex items-center justify-between">
-              <Label className="text-sm">启用 Ralph Loop</Label>
+              <Label className="text-sm">启用 Ralph 循环</Label>
               <Switch
                 checked={config.ralph_loop?.enabled ?? false}
                 onCheckedChange={(checked) => updateConfig({
@@ -400,7 +400,7 @@ export function OmoExperimentalPanel() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Skills 配置 (JSON)</Label>
+            <Label className="text-xs text-muted-foreground">技能配置（JSON）</Label>
             <Textarea
               className="mt-1 font-mono text-xs"
               rows={4}

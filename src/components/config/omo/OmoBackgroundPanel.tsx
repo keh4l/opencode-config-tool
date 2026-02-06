@@ -80,7 +80,7 @@ export function OmoBackgroundPanel() {
         </div>
 
         <div>
-          <Label className="mb-2 block">Provider 并发配置</Label>
+          <Label className="mb-2 block">提供商并发配置</Label>
           <div className="grid grid-cols-3 gap-2">
             {['anthropic', 'openai', 'google'].map((provider) => (
               <div key={provider}>

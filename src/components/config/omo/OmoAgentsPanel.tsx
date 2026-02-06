@@ -177,7 +177,7 @@ export function OmoAgentsPanel() {
                   <CollapsibleContent className="pt-3 space-y-3">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-xs text-muted-foreground">Top P</Label>
+                        <Label className="text-xs text-muted-foreground">采样概率（Top P）</Label>
                         <Input
                           className="mt-1"
                           type="number"
@@ -229,9 +229,9 @@ export function OmoAgentsPanel() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="_default">默认</SelectItem>
-                            <SelectItem value="subagent">subagent</SelectItem>
-                            <SelectItem value="primary">primary</SelectItem>
-                            <SelectItem value="all">all</SelectItem>
+                            <SelectItem value="subagent">子代理（subagent）</SelectItem>
+                            <SelectItem value="primary">主代理（primary）</SelectItem>
+                            <SelectItem value="all">全部（all）</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

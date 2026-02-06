@@ -187,7 +187,7 @@ export function OmoCategoriesPanel() {
                 <div className="space-y-3 pt-2">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Top P</Label>
+                      <Label className="text-xs text-muted-foreground">采样概率（Top P）</Label>
                       <Input
                         className="mt-1"
                         type="number"
@@ -261,10 +261,10 @@ export function OmoCategoriesPanel() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_default">默认</SelectItem>
-                          <SelectItem value="low">low</SelectItem>
-                          <SelectItem value="medium">medium</SelectItem>
-                          <SelectItem value="high">high</SelectItem>
-                          <SelectItem value="xhigh">xhigh</SelectItem>
+                          <SelectItem value="low">低（low）</SelectItem>
+                          <SelectItem value="medium">中（medium）</SelectItem>
+                          <SelectItem value="high">高（high）</SelectItem>
+                          <SelectItem value="xhigh">超高（xhigh）</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -294,9 +294,9 @@ export function OmoCategoriesPanel() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_default">默认</SelectItem>
-                          <SelectItem value="low">low</SelectItem>
-                          <SelectItem value="medium">medium</SelectItem>
-                          <SelectItem value="high">high</SelectItem>
+                          <SelectItem value="low">低（low）</SelectItem>
+                          <SelectItem value="medium">中（medium）</SelectItem>
+                          <SelectItem value="high">高（high）</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
