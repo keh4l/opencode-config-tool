@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
 import path from 'path'
+import pkg from './package.json'
 
 export default defineConfig({
   plugins: [
@@ -27,10 +28,12 @@ export default defineConfig({
           }
         }
       }
-      // Preload is now a static .cjs file, no need to compile
     ]),
     renderer()
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version)
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
@@ -39,7 +42,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // 代理 API 请求到后端服务器
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,

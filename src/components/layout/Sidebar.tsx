@@ -167,7 +167,7 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
       <div className="p-4 border-t border-border">
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
-            v1.0.2
+            v{__APP_VERSION__}
           </p>
         )}
       </div>
