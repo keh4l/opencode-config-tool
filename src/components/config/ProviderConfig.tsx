@@ -30,8 +30,25 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Server, Plus, Trash2, Edit, Globe, Settings2, X, ChevronDown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import type { ProviderConfig as ProviderConfigType, ModelConfig } from '@/types/config';
+import type { ProviderConfig as ProviderConfigType, ModelConfig, ModelModality, ProviderOptions } from '@/types/config';
 import { BUILTIN_PROVIDERS } from '@/types/config';
+
+const MODEL_MODALITIES: readonly ModelModality[] = ['text', 'audio', 'image', 'video', 'pdf'];
+
+const MODEL_MODALITY_LABELS: Record<ModelModality, string> = {
+  text: '文本',
+  audio: '音频',
+  image: '图像',
+  video: '视频',
+  pdf: 'PDF',
+};
+
+const upsertModality = (list: ModelModality[], modality: ModelModality, enabled: boolean): ModelModality[] => {
+  const set = new Set(list);
+  if (enabled) set.add(modality);
+  else set.delete(modality);
+  return MODEL_MODALITIES.filter((m) => set.has(m));
+};
 
 // NPM 包支持的模型选项映射
 const NPM_MODEL_OPTIONS: Record<string, {
@@ -193,11 +210,13 @@ const NPM_PACKAGE_INFO: Record<string, { placeholder: string; description: strin
 
 interface ProviderFormData {
   id: string;
+  api: string;
+  schemaId: string;
   npm: string;
   name: string;
   baseURL: string;
   apiKey: string;
-  headers: Record<string, string>;
+  optionsExtra: Record<string, unknown>;
   models: Record<string, ModelConfig>;
   whitelist: string[];
   blacklist: string[];
@@ -210,15 +229,17 @@ interface ProviderFormData {
 
 const emptyProvider: ProviderFormData = {
   id: '',
+  api: '',
+  schemaId: '',
   npm: '@ai-sdk/openai-compatible',
   name: '',
   baseURL: '',
   apiKey: '',
-  headers: {},
+  optionsExtra: {},
   models: {},
   whitelist: [],
   blacklist: [],
-  timeout: 30000,
+  timeout: 300000,
   timeoutEnabled: true,
   enterpriseUrl: '',
   env: [],
@@ -237,6 +258,9 @@ export function ProviderConfig() {
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const [variantModelId, setVariantModelId] = useState('');
   const [newVariantName, setNewVariantName] = useState('');
+  // 模型 Headers 编辑状态（按 modelKey 记录）
+  const [newModelHeaderKey, setNewModelHeaderKey] = useState<Record<string, string>>({});
+  const [newModelHeaderValue, setNewModelHeaderValue] = useState<Record<string, string>>({});
 
   const providers = config.provider || {};
 
@@ -248,17 +272,26 @@ export function ProviderConfig() {
   const handleEditProvider = (id: string) => {
     const provider = providers[id];
     if (provider) {
+      const optionsExtra: Record<string, unknown> = {};
+      const reservedOptionKeys = new Set(['apiKey', 'baseURL', 'enterpriseUrl', 'setCacheKey', 'timeout']);
+      for (const [key, value] of Object.entries(provider.options || {})) {
+        if (reservedOptionKeys.has(key)) continue;
+        if (value !== undefined) optionsExtra[key] = value;
+      }
+
       setEditingProvider({
         id,
+        api: provider.api || '',
+        schemaId: provider.id || '',
         npm: provider.npm || '@ai-sdk/openai-compatible',
         name: provider.name || '',
         baseURL: provider.options?.baseURL || '',
         apiKey: provider.options?.apiKey || '',
-        headers: provider.options?.headers || {},
+        optionsExtra,
         models: provider.models || {},
         whitelist: provider.whitelist || [],
         blacklist: provider.blacklist || [],
-        timeout: provider.options?.timeout === false ? 0 : (provider.options?.timeout || 30000),
+        timeout: provider.options?.timeout === false ? 0 : (provider.options?.timeout || 300000),
         timeoutEnabled: provider.options?.timeout !== false,
         enterpriseUrl: provider.options?.enterpriseUrl || '',
         env: provider.env || [],
@@ -271,10 +304,30 @@ export function ProviderConfig() {
   const handleSaveProvider = () => {
     if (!editingProvider || !editingProvider.id) return;
 
+    const isModelModalityValue = (value: unknown): value is ModelModality =>
+      typeof value === 'string' && MODEL_MODALITIES.includes(value as ModelModality);
+
     // 处理模型配置，为启用扩展思考但没有 budgetTokens 的模型补充默认值
     const processedModels: Record<string, ModelConfig> = {};
     for (const [modelId, model] of Object.entries(editingProvider.models)) {
       const processedModel = { ...model };
+
+      // Ensure schema-required limit fields are present if limit exists
+      if (processedModel.limit) {
+        const hasContext = typeof processedModel.limit.context === 'number' && Number.isFinite(processedModel.limit.context);
+        const hasOutput = typeof processedModel.limit.output === 'number' && Number.isFinite(processedModel.limit.output);
+        if (!hasContext || !hasOutput) {
+          processedModel.limit = undefined;
+        } else if (
+          processedModel.limit.input !== undefined &&
+          (typeof processedModel.limit.input !== 'number' || !Number.isFinite(processedModel.limit.input))
+        ) {
+          processedModel.limit = {
+            context: processedModel.limit.context,
+            output: processedModel.limit.output,
+          };
+        }
+      }
       if (processedModel.options?.thinking?.type === 'enabled' && !processedModel.options.thinking.budgetTokens) {
         processedModel.options = {
           ...processedModel.options,
@@ -284,21 +337,127 @@ export function ProviderConfig() {
           },
         };
       }
+
+      // Clean interleaved
+      if (processedModel.interleaved !== undefined) {
+        if (processedModel.interleaved === true) {
+          // ok
+        } else if (typeof processedModel.interleaved === 'object' && processedModel.interleaved !== null) {
+          const inter = processedModel.interleaved as { field?: unknown };
+          if (inter.field === 'reasoning_content' || inter.field === 'reasoning_details') {
+            processedModel.interleaved = { field: inter.field };
+          } else {
+            processedModel.interleaved = undefined;
+          }
+        } else {
+          processedModel.interleaved = undefined;
+        }
+      }
+
+      // Clean modalities (must include both input/output arrays)
+      if (processedModel.modalities !== undefined) {
+        const m = processedModel.modalities as { input?: unknown; output?: unknown };
+        const input = Array.isArray(m.input) ? m.input.filter(isModelModalityValue) : [];
+        const output = Array.isArray(m.output) ? m.output.filter(isModelModalityValue) : [];
+        if (input.length === 0 && output.length === 0) {
+          processedModel.modalities = undefined;
+        } else {
+          processedModel.modalities = { input, output };
+        }
+      }
+
+      // Clean cost (requires input + output)
+      if (processedModel.cost !== undefined) {
+        const cost = processedModel.cost as {
+          input?: unknown;
+          output?: unknown;
+          cache_read?: unknown;
+          cache_write?: unknown;
+          context_over_200k?: unknown;
+        };
+        const input = typeof cost.input === 'number' && Number.isFinite(cost.input) ? cost.input : undefined;
+        const output = typeof cost.output === 'number' && Number.isFinite(cost.output) ? cost.output : undefined;
+
+        if (input === undefined || output === undefined) {
+          processedModel.cost = undefined;
+        } else {
+          const cleaned: NonNullable<ModelConfig['cost']> = { input, output };
+          if (typeof cost.cache_read === 'number' && Number.isFinite(cost.cache_read)) cleaned.cache_read = cost.cache_read;
+          if (typeof cost.cache_write === 'number' && Number.isFinite(cost.cache_write)) cleaned.cache_write = cost.cache_write;
+
+          if (cost.context_over_200k && typeof cost.context_over_200k === 'object') {
+            const over = cost.context_over_200k as {
+              input?: unknown;
+              output?: unknown;
+              cache_read?: unknown;
+              cache_write?: unknown;
+            };
+            const overInput = typeof over.input === 'number' && Number.isFinite(over.input) ? over.input : undefined;
+            const overOutput = typeof over.output === 'number' && Number.isFinite(over.output) ? over.output : undefined;
+            if (overInput !== undefined && overOutput !== undefined) {
+              const cleanedOver: NonNullable<NonNullable<ModelConfig['cost']>['context_over_200k']> = {
+                input: overInput,
+                output: overOutput,
+              };
+              if (typeof over.cache_read === 'number' && Number.isFinite(over.cache_read)) cleanedOver.cache_read = over.cache_read;
+              if (typeof over.cache_write === 'number' && Number.isFinite(over.cache_write)) cleanedOver.cache_write = over.cache_write;
+              cleaned.context_over_200k = cleanedOver;
+            }
+          }
+
+          processedModel.cost = cleaned;
+        }
+      }
+
+      // Clean headers
+      if (processedModel.headers !== undefined) {
+        const raw = processedModel.headers as unknown;
+        if (!raw || typeof raw !== 'object') {
+          processedModel.headers = undefined;
+        } else {
+          const cleaned: Record<string, string> = {};
+          for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+            if (!key) continue;
+            if (typeof value === 'string') cleaned[key] = value;
+          }
+          processedModel.headers = Object.keys(cleaned).length > 0 ? cleaned : undefined;
+        }
+      }
+
+      // Clean provider override
+      if (processedModel.provider !== undefined) {
+        const raw = processedModel.provider as { npm?: unknown };
+        if (typeof raw.npm !== 'string' || raw.npm.trim() === '') {
+          processedModel.provider = undefined;
+        } else {
+          processedModel.provider = { npm: raw.npm.trim() };
+        }
+      }
+
       processedModels[modelId] = processedModel;
     }
 
     const providerConfig: ProviderConfigType = {
+      api: editingProvider.api || undefined,
+      id: editingProvider.schemaId || undefined,
       npm: editingProvider.npm,
       name: editingProvider.name,
       env: editingProvider.env.length > 0 ? editingProvider.env : undefined,
-      options: {
-        baseURL: editingProvider.baseURL || undefined,
-        apiKey: editingProvider.apiKey || undefined,
-        headers: Object.keys(editingProvider.headers).length > 0 ? editingProvider.headers : undefined,
-        timeout: editingProvider.timeoutEnabled ? editingProvider.timeout : false,
-        enterpriseUrl: editingProvider.enterpriseUrl || undefined,
-        setCacheKey: editingProvider.setCacheKey || undefined,
-      },
+      options: (() => {
+        const options: ProviderOptions = {};
+
+        for (const [key, value] of Object.entries(editingProvider.optionsExtra)) {
+          options[key] = value;
+        }
+
+        options.baseURL = editingProvider.baseURL || undefined;
+        options.apiKey = editingProvider.apiKey || undefined;
+        options.timeout = editingProvider.timeoutEnabled ? editingProvider.timeout : false;
+        options.enterpriseUrl = editingProvider.enterpriseUrl || undefined;
+        options.setCacheKey = editingProvider.setCacheKey || undefined;
+
+        return options;
+      })(),
       models: Object.keys(processedModels).length > 0 ? processedModels : undefined,
       whitelist: editingProvider.whitelist.length > 0 ? editingProvider.whitelist : undefined,
       blacklist: editingProvider.blacklist.length > 0 ? editingProvider.blacklist : undefined,
@@ -437,11 +596,11 @@ export function ProviderConfig() {
                     {/* Provider 详情 */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">NPM包:</span>
+                        <span className="text-muted-foreground">NPM 包：</span>
                         <span className="ml-2 font-mono text-foreground">{provider.npm || '默认'}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Base URL:</span>
+                        <span className="text-muted-foreground">API 地址：</span>
                         <span className="ml-2 font-mono text-foreground">{provider.options?.baseURL || '默认'}</span>
                       </div>
                     </div>
@@ -532,27 +691,45 @@ export function ProviderConfig() {
           {editingProvider && (
             <div className="space-y-6 py-4">
               {/* 基本信息 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="provider-id">提供商 ID</Label>
-                  <Input
-                    id="provider-id"
-                    value={editingProvider.id}
-                    onChange={(e) => setEditingProvider({ ...editingProvider, id: e.target.value })}
-                    placeholder="my-provider"
-                    disabled={!!providers[editingProvider.id]}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="provider-id">提供商 ID</Label>
+                    <Input
+                      id="provider-id"
+                      value={editingProvider.id}
+                      onChange={(e) => setEditingProvider({ ...editingProvider, id: e.target.value })}
+                      placeholder="my-provider"
+                      disabled={!!providers[editingProvider.id]}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="provider-name">显示名称</Label>
+                    <Input
+                      id="provider-name"
+                      value={editingProvider.name}
+                      onChange={(e) => setEditingProvider({ ...editingProvider, name: e.target.value })}
+                      placeholder="我的自定义提供商"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="provider-api">提供商 API 标识（api，可选）</Label>
+                    <Input
+                      id="provider-api"
+                      value={editingProvider.api}
+                      onChange={(e) => setEditingProvider({ ...editingProvider, api: e.target.value })}
+                      placeholder="例如: openai"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="provider-schema-id">提供商内部 ID（id，可选）</Label>
+                    <Input
+                      id="provider-schema-id"
+                      value={editingProvider.schemaId}
+                      onChange={(e) => setEditingProvider({ ...editingProvider, schemaId: e.target.value })}
+                      placeholder="可与配置 key 不同"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="provider-name">显示名称</Label>
-                  <Input
-                    id="provider-name"
-                    value={editingProvider.name}
-                    onChange={(e) => setEditingProvider({ ...editingProvider, name: e.target.value })}
-                    placeholder="我的自定义 Provider"
-                  />
-                </div>
-              </div>
 
               {/* NPM 包 */}
               <div className="space-y-2">
@@ -604,7 +781,7 @@ export function ProviderConfig() {
                 </h4>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="provider-baseurl">API 地址 (Base URL)</Label>
+                    <Label htmlFor="provider-baseurl">API 地址（baseURL）</Label>
                     <Input
                       id="provider-baseurl"
                       value={editingProvider.baseURL}
@@ -612,11 +789,11 @@ export function ProviderConfig() {
                       placeholder={NPM_PACKAGE_INFO[editingProvider.npm]?.placeholder || 'https://api.example.com/v1'}
                     />
                     <p className="text-xs text-muted-foreground">
-                      {NPM_PACKAGE_INFO[editingProvider.npm]?.description || '输入 API 服务的基础 URL'}
+                      {NPM_PACKAGE_INFO[editingProvider.npm]?.description || '输入 API 服务的baseURL'}
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="provider-apikey">API 密钥 (支持环境变量语法)</Label>
+                    <Label htmlFor="provider-apikey">API 密钥（支持环境变量语法）</Label>
                     <Input
                       id="provider-apikey"
                       value={editingProvider.apiKey}
@@ -733,9 +910,11 @@ export function ProviderConfig() {
                   <Input
                     id="provider-timeout"
                     type="number"
+                    min="1"
+                    step="1000"
                     value={editingProvider.timeout === false ? '' : editingProvider.timeout}
-                    onChange={(e) => setEditingProvider({ ...editingProvider, timeout: parseInt(e.target.value) || 0 })}
-                    placeholder="30000"
+                    onChange={(e) => setEditingProvider({ ...editingProvider, timeout: parseInt(e.target.value) || 300000 })}
+                    placeholder="300000"
                     disabled={!editingProvider.timeoutEnabled}
                   />
                   <p className="text-xs text-muted-foreground">
@@ -760,7 +939,7 @@ export function ProviderConfig() {
                 {/* Enterprise URL - only for github-copilot */}
                 {editingProvider.npm === '@ai-sdk/github-copilot' && (
                   <div className="space-y-2">
-                    <Label htmlFor="provider-enterprise-url">GitHub Enterprise URL</Label>
+                    <Label htmlFor="provider-enterprise-url">GitHub 企业版 URL</Label>
                     <Input
                       id="provider-enterprise-url"
                       value={editingProvider.enterpriseUrl}
@@ -808,7 +987,7 @@ export function ProviderConfig() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    指定此 Provider 需要的环境变量名称列表。
+                    指定此提供商需要的环境变量名称列表。
                   </p>
                 </div>
               </div>
@@ -855,7 +1034,7 @@ export function ProviderConfig() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="p-4 pt-0 space-y-4 border-t">
                         {/* 基本信息 */}
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">显示名称</Label>
                             <Input
@@ -877,6 +1056,18 @@ export function ProviderConfig() {
                             />
                           </div>
                           <div className="space-y-1">
+                            <Label className="text-xs">输入限制</Label>
+                            <Input
+                              type="number"
+                              value={model.limit?.input || ''}
+                              onChange={(e) => handleUpdateModel(modelId, 'limit', {
+                                ...model.limit,
+                                input: parseInt(e.target.value) || undefined,
+                              })}
+                              placeholder="128000"
+                            />
+                          </div>
+                          <div className="space-y-1">
                             <Label className="text-xs">输出限制</Label>
                             <Input
                               type="number"
@@ -890,6 +1081,437 @@ export function ProviderConfig() {
                           </div>
                         </div>
 
+                        {model.limit && (model.limit.context === undefined || model.limit.output === undefined) && (
+                          <p className="text-xs text-amber-500">
+                            规范要求 limit.context 和 limit.output 同时存在，否则保存时会忽略 limit。
+                          </p>
+                        )}
+
+                        {/* Schema 字段（高级） */}
+                        <Collapsible className="border border-border rounded-lg">
+                          <CollapsibleTrigger className="flex w-full items-center justify-between p-3 hover:bg-muted/50">
+                            <div className="text-left">
+                              <div className="text-sm font-medium">规范字段（高级）</div>
+                              <p className="text-xs text-muted-foreground">
+                                补齐 provider.models.* 的规范字段（元数据 / 能力 / 请求头 / 计费 / 模态 等）
+                              </p>
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="p-3 pt-0 space-y-5">
+                            {/* 元数据 */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium">元数据</Label>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">模型 ID（id，可选）</Label>
+                                  <Input
+                                    value={model.id || ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'id', e.target.value || undefined)}
+                                    placeholder="可与 modelKey 不同"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">模型家族（family，可选）</Label>
+                                  <Input
+                                    value={model.family || ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'family', e.target.value || undefined)}
+                                    placeholder="例如: gpt, claude"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">发布日期（release_date，可选）</Label>
+                                  <Input
+                                    type="date"
+                                    value={model.release_date || ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'release_date', e.target.value || undefined)}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">状态（status，可选）</Label>
+                                  <Select
+                                    value={model.status || ''}
+                                    onValueChange={(value) => handleUpdateModel(modelId, 'status', value || undefined)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="选择状态" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="alpha">早期（alpha）</SelectItem>
+                                      <SelectItem value="beta">测试（beta）</SelectItem>
+                                      <SelectItem value="deprecated">已废弃（deprecated）</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <div>
+                                  <Label className="text-sm">实验性（experimental）</Label>
+                                  <p className="text-xs text-muted-foreground">标记该模型为实验性</p>
+                                </div>
+                                <Switch
+                                  checked={model.experimental ?? false}
+                                  onCheckedChange={(checked) => handleUpdateModel(modelId, 'experimental', checked ? true : undefined)}
+                                />
+                              </div>
+                            </div>
+
+                            {/* 能力标记 */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium">能力标记</Label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <Label className="text-sm">支持附件（attachment）</Label>
+                                    <p className="text-xs text-muted-foreground">支持附件输入</p>
+                                  </div>
+                                  <Switch
+                                    checked={model.attachment ?? false}
+                                    onCheckedChange={(checked) => handleUpdateModel(modelId, 'attachment', checked ? true : undefined)}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <Label className="text-sm">支持推理（reasoning）</Label>
+                                    <p className="text-xs text-muted-foreground">支持推理相关能力</p>
+                                  </div>
+                                  <Switch
+                                    checked={model.reasoning ?? false}
+                                    onCheckedChange={(checked) => handleUpdateModel(modelId, 'reasoning', checked ? true : undefined)}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <Label className="text-sm">支持温度参数（temperature）</Label>
+                                    <p className="text-xs text-muted-foreground">支持温度参数（能力标记）</p>
+                                  </div>
+                                  <Switch
+                                    checked={model.temperature ?? false}
+                                    onCheckedChange={(checked) => handleUpdateModel(modelId, 'temperature', checked ? true : undefined)}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <Label className="text-sm">支持工具调用（tool_call）</Label>
+                                    <p className="text-xs text-muted-foreground">支持工具调用（能力标记）</p>
+                                  </div>
+                                  <Switch
+                                    checked={model.tool_call ?? false}
+                                    onCheckedChange={(checked) => handleUpdateModel(modelId, 'tool_call', checked ? true : undefined)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Interleaved */}
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">交错输出（interleaved）</Label>
+                              <Select
+                                value={
+                                  model.interleaved === true
+                                    ? 'true'
+                                    : typeof model.interleaved === 'object' && model.interleaved
+                                      ? model.interleaved.field
+                                      : 'off'
+                                }
+                                onValueChange={(value) => {
+                                  if (value === 'off') {
+                                    handleUpdateModel(modelId, 'interleaved', undefined);
+                                    return;
+                                  }
+                                  if (value === 'true') {
+                                    handleUpdateModel(modelId, 'interleaved', true);
+                                    return;
+                                  }
+                                  if (value === 'reasoning_content' || value === 'reasoning_details') {
+                                    handleUpdateModel(modelId, 'interleaved', { field: value });
+                                  }
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="off">关闭</SelectItem>
+                                  <SelectItem value="true">启用（true）</SelectItem>
+                                  <SelectItem value="reasoning_content">字段：reasoning_content</SelectItem>
+                                  <SelectItem value="reasoning_details">字段：reasoning_details</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Modalities */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium">输入输出模态（modalities）</Label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-muted-foreground">输入模态（可多选）</Label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {MODEL_MODALITIES.map((modality) => {
+                                      const current = model.modalities ?? { input: [], output: [] };
+                                      const selected = current.input.includes(modality);
+                                      return (
+                                        <Button
+                                          key={`input-${modality}`}
+                                          type="button"
+                                          size="sm"
+                                          variant={selected ? 'secondary' : 'outline'}
+                                          className="h-8 px-2 text-xs"
+                                          onClick={() => {
+                                            const nextInput = upsertModality(current.input, modality, !selected);
+                                            const next = { input: nextInput, output: current.output };
+                                            handleUpdateModel(
+                                              modelId,
+                                              'modalities',
+                                              next.input.length === 0 && next.output.length === 0 ? undefined : next
+                                            );
+                                          }}
+                                        >
+                                          {MODEL_MODALITY_LABELS[modality]}（{modality}）
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-muted-foreground">输出模态（可多选）</Label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {MODEL_MODALITIES.map((modality) => {
+                                      const current = model.modalities ?? { input: [], output: [] };
+                                      const selected = current.output.includes(modality);
+                                      return (
+                                        <Button
+                                          key={`output-${modality}`}
+                                          type="button"
+                                          size="sm"
+                                          variant={selected ? 'secondary' : 'outline'}
+                                          className="h-8 px-2 text-xs"
+                                          onClick={() => {
+                                            const nextOutput = upsertModality(current.output, modality, !selected);
+                                            const next = { input: current.input, output: nextOutput };
+                                            handleUpdateModel(
+                                              modelId,
+                                              'modalities',
+                                              next.input.length === 0 && next.output.length === 0 ? undefined : next
+                                            );
+                                          }}
+                                        >
+                                          {MODEL_MODALITY_LABELS[modality]}（{modality}）
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                点击标签选择，可多选。输入/输出可以分别设置；都不选表示不限制。
+                              </p>
+                            </div>
+
+                            {/* Cost */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium">计费（cost）</Label>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">输入</Label>
+                                  <p className="text-[10px] text-muted-foreground font-mono">input</p>
+                                  <Input
+                                    type="number"
+                                    value={model.cost?.input ?? ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                      ...model.cost,
+                                      input: e.target.value ? parseFloat(e.target.value) : undefined,
+                                    })}
+                                    placeholder="0.0"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">输出</Label>
+                                  <p className="text-[10px] text-muted-foreground font-mono">output</p>
+                                  <Input
+                                    type="number"
+                                    value={model.cost?.output ?? ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                      ...model.cost,
+                                      output: e.target.value ? parseFloat(e.target.value) : undefined,
+                                    })}
+                                    placeholder="0.0"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">缓存读取</Label>
+                                  <p className="text-[10px] text-muted-foreground font-mono">cache_read</p>
+                                  <Input
+                                    type="number"
+                                    value={model.cost?.cache_read ?? ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                      ...model.cost,
+                                      cache_read: e.target.value ? parseFloat(e.target.value) : undefined,
+                                    })}
+                                    placeholder="0.0"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs">缓存写入</Label>
+                                  <p className="text-[10px] text-muted-foreground font-mono">cache_write</p>
+                                  <Input
+                                    type="number"
+                                    value={model.cost?.cache_write ?? ''}
+                                    onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                      ...model.cost,
+                                      cache_write: e.target.value ? parseFloat(e.target.value) : undefined,
+                                    })}
+                                    placeholder="0.0"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="p-3 border rounded-lg space-y-3">
+                                <Label className="text-xs">超大上下文计费（context_over_200k，可选）</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">输入</Label>
+                                    <p className="text-[10px] text-muted-foreground font-mono">input</p>
+                                    <Input
+                                      type="number"
+                                      value={model.cost?.context_over_200k?.input ?? ''}
+                                      onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                        ...model.cost,
+                                        context_over_200k: {
+                                          ...model.cost?.context_over_200k,
+                                          input: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        },
+                                      })}
+                                      placeholder="0.0"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">输出</Label>
+                                    <p className="text-[10px] text-muted-foreground font-mono">output</p>
+                                    <Input
+                                      type="number"
+                                      value={model.cost?.context_over_200k?.output ?? ''}
+                                      onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                        ...model.cost,
+                                        context_over_200k: {
+                                          ...model.cost?.context_over_200k,
+                                          output: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        },
+                                      })}
+                                      placeholder="0.0"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">缓存读取</Label>
+                                    <p className="text-[10px] text-muted-foreground font-mono">cache_read</p>
+                                    <Input
+                                      type="number"
+                                      value={model.cost?.context_over_200k?.cache_read ?? ''}
+                                      onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                        ...model.cost,
+                                        context_over_200k: {
+                                          ...model.cost?.context_over_200k,
+                                          cache_read: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        },
+                                      })}
+                                      placeholder="0.0"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">缓存写入</Label>
+                                    <p className="text-[10px] text-muted-foreground font-mono">cache_write</p>
+                                    <Input
+                                      type="number"
+                                      value={model.cost?.context_over_200k?.cache_write ?? ''}
+                                      onChange={(e) => handleUpdateModel(modelId, 'cost', {
+                                        ...model.cost,
+                                        context_over_200k: {
+                                          ...model.cost?.context_over_200k,
+                                          cache_write: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        },
+                                      })}
+                                      placeholder="0.0"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Headers */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium">请求头（model.headers）</Label>
+
+                              {model.headers && Object.keys(model.headers).length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(model.headers).map(([key, value]) => (
+                                    <Badge key={key} variant="outline" className="flex items-center gap-1 font-mono text-xs">
+                                      {key}={value}
+                                      <X
+                                        className="h-3 w-3 cursor-pointer hover:text-destructive"
+                                        onClick={() => {
+                                          const { [key]: _, ...rest } = model.headers || {};
+                                          handleUpdateModel(modelId, 'headers', Object.keys(rest).length > 0 ? rest : undefined);
+                                        }}
+                                      />
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground">暂无请求头</p>
+                              )}
+
+                              <div className="flex gap-2">
+                                <Input
+                                  value={newModelHeaderKey[modelId] || ''}
+                                  onChange={(e) => setNewModelHeaderKey((prev) => ({ ...prev, [modelId]: e.target.value }))}
+                                  placeholder="请求头键（如 Authorization）"
+                                  className="flex-1 font-mono text-xs"
+                                />
+                                <Input
+                                  value={newModelHeaderValue[modelId] || ''}
+                                  onChange={(e) => setNewModelHeaderValue((prev) => ({ ...prev, [modelId]: e.target.value }))}
+                                  placeholder="请求头值（如 Bearer xxx）"
+                                  className="flex-1 font-mono text-xs"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const key = (newModelHeaderKey[modelId] || '').trim();
+                                    if (!key) return;
+                                    const value = newModelHeaderValue[modelId] || '';
+                                    handleUpdateModel(modelId, 'headers', {
+                                      ...(model.headers || {}),
+                                      [key]: value,
+                                    });
+                                    setNewModelHeaderKey((prev) => ({ ...prev, [modelId]: '' }));
+                                    setNewModelHeaderValue((prev) => ({ ...prev, [modelId]: '' }));
+                                  }}
+                                  disabled={!(newModelHeaderKey[modelId] || '').trim()}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  添加
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Provider override */}
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">模型提供商覆盖（model.provider.npm）</Label>
+                              <Input
+                                value={model.provider?.npm || ''}
+                                onChange={(e) => {
+                                  const npm = e.target.value.trim();
+                                  handleUpdateModel(modelId, 'provider', npm ? { npm } : undefined);
+                                }}
+                                placeholder="例如: @ai-sdk/openai"
+                              />
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+
                         {/* 模型选项 - 根据 NPM 包动态显示 */}
                         {(() => {
                           const supportedOptions = getModelOptionsForNpm(editingProvider.npm);
@@ -899,7 +1521,7 @@ export function ProviderConfig() {
                             return (
                               <div className="p-3 bg-muted/50 rounded-lg">
                                 <p className="text-sm text-muted-foreground">
-                                  当前 Provider ({editingProvider.npm}) 没有特殊的模型选项配置
+                                  当前提供商（{editingProvider.npm}）没有特殊的模型选项配置
                                 </p>
                               </div>
                             );
@@ -1092,7 +1714,7 @@ export function ProviderConfig() {
                                       </Select>
                                     </div>
                                     <div className="space-y-1">
-                                      <Label className="text-xs">思考预算 (Token 数)</Label>
+                                       <Label className="text-xs">思考预算（Token 数）</Label>
                                       <Input
                                         type="number"
                                         value={model.options?.thinking?.type === 'enabled'
@@ -1146,8 +1768,20 @@ export function ProviderConfig() {
                               </p>
                               {model.variants && Object.entries(model.variants).map(([variantName, variant]) => (
                                 <div key={variantName} className="p-3 border rounded-lg space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <Badge variant="secondary">{variantName}</Badge>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-3">
+                                      <Badge variant="secondary">{variantName}</Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Label className="text-xs text-muted-foreground">禁用</Label>
+                                        <Switch
+                                          checked={variant.disabled ?? false}
+                                          onCheckedChange={(checked) => handleUpdateModel(modelId, 'variants', {
+                                            ...model.variants,
+                                            [variantName]: { ...variant, disabled: checked ? true : undefined },
+                                          })}
+                                        />
+                                      </div>
+                                    </div>
                                     <Button
                                       variant="ghost"
                                       size="sm"
