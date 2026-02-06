@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.8-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
@@ -24,7 +24,7 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 - ⚡ **高效便捷** - 一键导入/导出配置模板
 - 🎨 **现代设计** - 支持亮色/暗色主题切换
 - 🔒 **安全可靠** - 本地运行，配置文件不上传
-- 🛠️ **功能完整** - 覆盖 OpenCode 和 Oh My OpenCode 所有配置项
+- 🛠️ **功能完整** - 覆盖 OpenCode 与 OMO（Oh My OpenCode）常用配置项（并持续对齐官方 Schema）
 - ✨ **双模式支持** - 一个工具管理两套配置
 
 ---
@@ -217,10 +217,7 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
    npm run electron:build
    ```
    
-   构建产物位于 `release/` 目录：
-   - Windows: `release/OpenCode Config Tool Setup x.x.x.exe`
-   - macOS: `release/OpenCode Config Tool-x.x.x.dmg`
-   - Linux: `release/OpenCode Config Tool-x.x.x.AppImage`
+    构建产物默认输出到 `/tmp/opencode-release/` 目录（见 `electron-builder.json` 的 `directories.output`）。
 
 ---
 
@@ -234,7 +231,7 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
    - 双击桌面图标或从开始菜单启动
 
 2. **选择配置文件位置**
-   - 默认位置：`~/.opencode/config.json`
+    - 默认位置：`~/.config/opencode/opencode.json`
    - 或点击"浏览"选择自定义位置
 
 3. **开始配置**
@@ -819,6 +816,17 @@ npm run electron:build -- --linux
 - 检查磁盘空间是否充足
 - 查看详细错误信息
 
+#### 6. 无法获取模型列表（`opencode models` 报错）
+
+**问题**：界面提示无法获取模型列表，或控制台看到 `opencode models` 执行失败。
+
+**解决方案**：
+- 先在终端确认 `opencode models` 可运行
+- 若看到类似 `BuildMessage: ENOENT reading "~/.cache/opencode/..."`：
+  - 删除缓存目录 `~/.cache/opencode`
+  - 重新运行 `opencode models`
+  - 仍失败则按日志路径查看详情（`~/.local/share/opencode/log/...`）
+
 ### 获取帮助
 
 如果遇到其他问题：
@@ -886,7 +894,12 @@ SOFTWARE.
 
 查看完整的版本更新历史和变更记录：**[CHANGELOG.md](CHANGELOG.md)**
 
-### 最新版本 v1.0.7 (2026-02-06)
+### 最新版本 v1.0.8 (2026-02-06)
+- ✨ **Provider 深层配置补齐**：支持编辑 cost、输入输出模态（modalities）、交错输出（interleaved）、请求头（model.headers）等
+- 🎛️ **模态选择改进**：modalities 改为“标签多选”，不再依赖手动输入逗号
+- 🛠️ **模型列表错误更友好**：`opencode models` 失败时返回中文修复建议（例如缓存缺失时建议清理 `~/.cache/opencode`）
+
+### v1.0.7 (2026-02-06)
 - 🐛 **Schema 配置项完整对齐** - 补齐 5 个缺失快捷键、修正默认值、AgentConfig 补齐 maxSteps
 - 📝 KNOWN_HOOKS 从 4 个扩展到 30 个（完整覆盖 Schema 枚举）
 - 📝 KNOWN_DISABLED_AGENTS 从 2 个扩展到 9 个（完整覆盖 Schema 枚举）
