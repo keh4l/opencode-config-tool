@@ -28,6 +28,7 @@
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
+    "timestamp": "none",
     "artifactName": "${productName}-v${version}-macos-${arch}.${ext}"
   },
   "win": {
@@ -43,6 +44,9 @@
     ],
     "icon": "build/icon.ico",
     "artifactName": "${productName}-v${version}-windows-${arch}.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName}-v${version}-windows-${arch}-portable.${ext}"
   },
   "linux": {
     "target": [
@@ -60,6 +64,7 @@
     "artifactName": "${productName}-v${version}-linux-${arch}.${ext}"
   },
   "nsis": {
+    "artifactName": "${productName}-v${version}-windows-${arch}-setup.${ext}",
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
