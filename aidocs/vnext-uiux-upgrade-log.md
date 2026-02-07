@@ -1172,3 +1172,29 @@ How to verify：
 验证：
 
 - `npm run check`：通过。
+
+---
+
+## 34) 2026-02-07 14:21（CST）改进 @modified 轻提示可读性：允许换行显示（不再强制截断）
+
+Why：
+
+- 轻提示强制 `truncate` 虽能避免越界，但在窄宽度下会让用户依然看不到核心内容（可发现性下降）。
+
+What：
+
+- 提示行改为允许自然换行：保留 `@modified` Tag，说明文本使用 `whitespace-normal break-words`，窄宽度可多行显示。
+- 保持约束：仍在同一容器宽度内（`w-full/max-w-full/min-w-0`），不会撑出侧栏。
+
+Where：
+
+- `src/components/layout/Sidebar.tsx`
+
+How to verify：
+
+- 缩窄侧栏：`提示：输入 @modified 查看本次修改` 可换行完整显示；不会横向越界。
+- 输入框/焦点态/清除按钮行为不受影响。
+
+验证：
+
+- `npm run check`：通过。

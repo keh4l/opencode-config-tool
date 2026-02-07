@@ -444,14 +444,15 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
               {/* 轻提示：保证 @modified 可发现性（不占输入框布局宽度） */}
               <div
                 id="sidebar-search-hint"
-                className="w-full max-w-full min-w-0 overflow-hidden text-xs text-muted-foreground"
+                className="w-full max-w-full min-w-0 text-xs text-muted-foreground leading-snug"
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-col gap-1 min-w-0 sm:flex-row sm:items-start sm:gap-2">
                   <span className="shrink-0 rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
                     @modified
                   </span>
-                  <span className="min-w-0 flex-1 truncate sm:hidden">只看已修改</span>
-                  <span className="min-w-0 flex-1 truncate hidden sm:inline">提示：输入 @modified 查看本次修改</span>
+                  <span className="min-w-0 whitespace-normal break-words">
+                    提示：输入 @modified 查看本次修改
+                  </span>
                 </div>
               </div>
             </div>
