@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SettingRow } from '@/components/layout/SettingRow';
 import { Code2, Plus, X, ChevronDown, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import type { LspServerConfig } from '@/types/config';
@@ -82,18 +83,15 @@ export function LspConfigPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* 全局开关 */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>启用 LSP 支持</Label>
-            <p className="text-xs text-muted-foreground">
-              禁用将关闭所有语言服务器功能
-            </p>
-          </div>
+        <SettingRow
+          label="启用 LSP 支持"
+          description="禁用将关闭所有语言服务器功能"
+        >
           <Switch
             checked={!lspDisabled}
             onCheckedChange={toggleLsp}
           />
-        </div>
+        </SettingRow>
 
         {!lspDisabled && (
           <>

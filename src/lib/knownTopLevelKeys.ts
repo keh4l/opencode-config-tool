@@ -1,0 +1,63 @@
+// Keep this list aligned with src/types/config.ts and src/types/oh-my-opencode.ts.
+// Used for import validation warnings (avoid false "unknown field" on exported configs).
+
+export const KNOWN_OPENCODE_TOP_LEVEL_KEYS: string[] = [
+  '$schema',
+  'model',
+  'small_model',
+  'default_agent',
+  'username',
+  'provider',
+  'agent',
+  'permission',
+  'mcp',
+  'keybinds',
+  'tui',
+  'server',
+  'lsp',
+  'formatter',
+  'compaction',
+  'experimental',
+  'watcher',
+  'skills',
+  'enterprise',
+  'theme',
+  'plugin',
+  'instructions',
+  'share',
+  // Deprecated / compatibility fields
+  'autoshare',
+  'layout',
+  'tools',
+  'mode',
+  // Command config
+  'command',
+  // Misc
+  'logLevel',
+  'autoupdate',
+  'snapshot',
+  'disabled_providers',
+  'enabled_providers',
+];
+
+export const KNOWN_OMOC_TOP_LEVEL_KEYS: string[] = [
+  '$schema',
+  'agents',
+  'categories',
+  'background_task',
+  'tmux',
+  'sisyphus_agent',
+  'disabled_hooks',
+  'disabled_agents',
+  'disabled_mcps',
+  'disabled_skills',
+  'disabled_commands',
+  'claude_code',
+  'experimental',
+  'auto_update',
+  'comment_checker',
+  'git_master',
+  'notification',
+  'ralph_loop',
+  'skills',
+];

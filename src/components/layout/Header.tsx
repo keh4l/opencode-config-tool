@@ -102,9 +102,9 @@ export function Header({
               )}
               onClick={() => onConfigModeChange('oh-my-opencode')}
             >
-              <Sparkles className={cn('h-4 w-4 mr-2', !isOpenCodeMode ? 'text-purple-500' : '')} />
-              Oh My OpenCode
-            </Button>
+               <Sparkles className={cn('h-4 w-4 mr-2', !isOpenCodeMode ? 'text-brand-secondary' : '')} />
+               Oh My OpenCode
+             </Button>
           </div>
         </div>
 
@@ -182,6 +182,21 @@ export function Header({
       {/* 第二行：配置文件路径 + 状态 */}
       <div className="flex items-center justify-between h-8 px-6 bg-muted/30 border-t border-border/50">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded border',
+              isOpenCodeMode
+                ? 'border-brand-primary/20 text-brand-primary bg-brand-primary/10'
+                : 'border-brand-secondary/20 text-brand-secondary bg-brand-secondary/10'
+            )}
+          >
+            {isOpenCodeMode ? (
+              <FileJson className="h-3 w-3" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            <span>{isOpenCodeMode ? 'OpenCode' : 'OMO'}</span>
+          </span>
           <FolderOpen className="h-3 w-3" />
           <span className="font-mono truncate max-w-[500px]" title={configPath || '未加载'}>
             {configPath || '未加载配置文件'}
@@ -191,10 +206,10 @@ export function Header({
           )}
         </div>
         {isDirty && (
-          <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded">
-            未保存
-          </span>
-        )}
+           <span className="px-2 py-0.5 text-xs font-medium rounded border border-warning/20 bg-warning/10 text-warning">
+             未保存
+           </span>
+         )}
       </div>
     </header>
   );

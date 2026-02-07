@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { SettingRow } from '@/components/layout/SettingRow';
 import { Minimize2, Scissors } from 'lucide-react';
 import type { CompactionConfig } from '@/types/config';
 import { useConfigStore } from '@/hooks/useConfig';
@@ -28,37 +28,37 @@ export function CompactionConfigPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* 自动压缩 */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="flex items-center gap-2">
-              <Minimize2 className="h-4 w-4" />
-              自动压缩
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              当上下文接近限制时自动压缩对话历史
-            </p>
-          </div>
+        <div className="divide-y">
+          <SettingRow
+            label={(
+              <span className="flex items-center gap-2">
+                <Minimize2 className="h-4 w-4" />
+                自动压缩
+              </span>
+            )}
+            description="当上下文接近限制时自动压缩对话历史"
+          >
           <Switch
             checked={compaction.auto ?? true}
             onCheckedChange={(checked) => updateCompaction({ auto: checked })}
           />
-        </div>
+          </SettingRow>
 
         {/* 修剪旧输出 */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="flex items-center gap-2">
-              <Scissors className="h-4 w-4" />
-              修剪旧输出
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              自动移除旧的工具输出以节省上下文空间
-            </p>
-          </div>
+          <SettingRow
+            label={(
+              <span className="flex items-center gap-2">
+                <Scissors className="h-4 w-4" />
+                修剪旧输出
+              </span>
+            )}
+            description="自动移除旧的工具输出以节省上下文空间"
+          >
           <Switch
             checked={compaction.prune ?? true}
             onCheckedChange={(checked) => updateCompaction({ prune: checked })}
           />
+          </SettingRow>
         </div>
 
         <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">

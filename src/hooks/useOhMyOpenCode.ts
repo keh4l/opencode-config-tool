@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { OhMyOpenCodeConfig, OmocPreset, OmocAgentModelOverride, OmocCategoryConfig } from '@/types/oh-my-opencode';
 import { DEFAULT_OMOC_CONFIG } from '@/lib/oh-my-opencode-defaults';
+import { deepMerge } from '@/lib/deepMerge';
+import { hasPostApplyEdits } from '@/lib/hasPostApplyEdits';
 
 interface OhMyOpenCodeState {
   // 配置数据
@@ -16,12 +18,20 @@ interface OhMyOpenCodeState {
   isLoading: boolean;
   error: string | null;
 
+  // One-level undo snapshot for apply/import flows
+  lastApplySnapshot: OhMyOpenCodeConfig | null;
+  lastApplyLabel: string | null;
+  lastApplyAppliedConfig: OhMyOpenCodeConfig | null;
+
   // Actions
   setConfig: (config: OhMyOpenCodeConfig) => void;
   updateConfig: (partial: Partial<OhMyOpenCodeConfig>) => void;
   loadConfig: (scope?: 'global' | 'project') => Promise<void>;
   saveConfig: () => Promise<void>;
   applyPreset: (preset: OmocPreset) => void;
+  applyImportedConfig: (incoming: OhMyOpenCodeConfig, strategy: 'overwrite' | 'merge') => void;
+  undoLastApply: () => void;
+  hasPostApplyEdits: () => boolean;
   resetConfig: () => void;
 
   // Agent overrides
@@ -73,6 +83,10 @@ export const useOhMyOpenCodeStore = create<OhMyOpenCodeState>()(
       isDirty: false,
       isLoading: false,
       error: null,
+
+      lastApplySnapshot: null,
+      lastApplyLabel: null,
+      lastApplyAppliedConfig: null,
 
       setConfig: (config) => {
         set({
@@ -168,6 +182,7 @@ export const useOhMyOpenCodeStore = create<OhMyOpenCodeState>()(
 
       applyPreset: (preset) => {
         const currentConfig = get().config;
+        const snapshot = structuredClone(currentConfig);
         const newConfig = {
           ...currentConfig,
           ...preset.config,
@@ -186,7 +201,46 @@ export const useOhMyOpenCodeStore = create<OhMyOpenCodeState>()(
             }
           }
         };
-        set({ config: newConfig, isDirty: true });
+        set({
+          config: newConfig,
+          isDirty: JSON.stringify(newConfig) !== JSON.stringify(get().originalConfig),
+          lastApplySnapshot: snapshot,
+          lastApplyLabel: 'preset',
+          lastApplyAppliedConfig: structuredClone(newConfig),
+        });
+      },
+
+      applyImportedConfig: (incoming, strategy) => {
+        const current = get().config;
+        const snapshot = structuredClone(current);
+        const nextConfig = strategy === 'overwrite'
+          ? { ...incoming }
+          : deepMerge(current as Record<string, unknown>, incoming as Record<string, unknown>) as OhMyOpenCodeConfig;
+
+        set({
+          config: nextConfig,
+          isDirty: JSON.stringify(nextConfig) !== JSON.stringify(get().originalConfig),
+          lastApplySnapshot: snapshot,
+          lastApplyLabel: 'import',
+          lastApplyAppliedConfig: structuredClone(nextConfig),
+        });
+      },
+
+      undoLastApply: () => {
+        const snapshot = get().lastApplySnapshot;
+        if (!snapshot) return;
+        set({
+          config: snapshot,
+          isDirty: JSON.stringify(snapshot) !== JSON.stringify(get().originalConfig),
+          lastApplySnapshot: null,
+          lastApplyLabel: null,
+          lastApplyAppliedConfig: null,
+        });
+      },
+
+      hasPostApplyEdits: () => {
+        const applied = get().lastApplyAppliedConfig;
+        return hasPostApplyEdits(get().config, applied);
       },
 
       resetConfig: () => {

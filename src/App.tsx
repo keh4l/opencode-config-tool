@@ -33,22 +33,65 @@ import { TemplateDialog } from '@/components/TemplateDialog';
 import { OmoPresetsDialog } from '@/components/OmoPresetsDialog';
 import { JsonPreview } from '@/components/JsonPreview';
 import { ImportExportDialog } from '@/components/ImportExportDialog';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { useConfigStore } from '@/hooks/useConfig';
 import { useOhMyOpenCodeStore } from '@/hooks/useOhMyOpenCode';
 import { useThemeStore } from '@/hooks/useTheme';
+import { useFeatureFlagsStore } from '@/hooks/useFeatureFlags';
 import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
+import { readJson, writeJson } from '@/lib/persist';
+import { getEffectiveFeatureFlag } from '@/lib/featureFlags';
+
+type UiPersistState = {
+  lastMode: ConfigMode;
+  lastOpenCodeNav: NavItem;
+  lastOmoNav: NavItem;
+};
+
+const UI_PERSIST_KEY = 'opencode-config-tool:ui';
+
+const isNavValidForMode = (mode: ConfigMode, nav: unknown): nav is NavItem => {
+  if (typeof nav !== 'string') return false;
+  return mode === 'oh-my-opencode' ? nav.startsWith('omo-') : !nav.startsWith('omo-');
+};
 
 export default function App() {
-  const [configMode, setConfigMode] = useState<ConfigMode>('opencode');
-  const [activeNav, setActiveNav] = useState<NavItem>('model');
+  const { toast } = useToast();
+
+  const persisted = typeof window !== 'undefined'
+    ? readJson<UiPersistState>(UI_PERSIST_KEY)
+    : null;
+
+  const initialMode: ConfigMode = persisted?.lastMode || 'opencode';
+  const initialNav: NavItem = (() => {
+    const fallback = initialMode === 'opencode' ? 'model' : 'omo-agents';
+    const candidate = initialMode === 'opencode' ? persisted?.lastOpenCodeNav : persisted?.lastOmoNav;
+    return isNavValidForMode(initialMode, candidate) ? candidate : fallback;
+  })();
+
+  const [configMode, setConfigMode] = useState<ConfigMode>(initialMode);
+  const [activeNav, setActiveNav] = useState<NavItem>(initialNav);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showOmoPresets, setShowOmoPresets] = useState(false);
   const [showImportExport, setShowImportExport] = useState<'import' | 'export' | null>(null);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [modifiedOpenCode, setModifiedOpenCode] = useState<Record<string, boolean>>({});
+  const [modifiedOmo, setModifiedOmo] = useState<Record<string, boolean>>({});
 
-  const { loadConfig: loadOpenCodeConfig, isLoading: isOpenCodeLoading } = useConfigStore();
-  const { loadConfig: loadOmoConfig, isLoading: isOmoLoading } = useOhMyOpenCodeStore();
+  type PendingAction =
+    | { type: 'mode'; nextMode: ConfigMode }
+    | { type: 'nav'; nextNav: NavItem };
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  const openCodeStore = useConfigStore();
+  const omoStore = useOhMyOpenCodeStore();
+  const loadOpenCodeConfig = openCodeStore.loadConfig;
+  const isOpenCodeLoading = openCodeStore.isLoading;
+  const loadOmoConfig = omoStore.loadConfig;
+  const isOmoLoading = omoStore.isLoading;
   const { theme } = useThemeStore();
 
   // 初始化加载配置
@@ -67,15 +110,178 @@ export default function App() {
     }
   }, [theme]);
 
-  // 切换配置模式时重置导航
+  // Persist mode + per-mode last panel (vNext: 模式切换记忆上下文)
+  useEffect(() => {
+    const existing = readJson<UiPersistState>(UI_PERSIST_KEY);
+    const next: UiPersistState = {
+      lastMode: configMode,
+      lastOpenCodeNav: existing?.lastOpenCodeNav || 'model',
+      lastOmoNav: existing?.lastOmoNav || 'omo-agents',
+    };
+    writeJson(UI_PERSIST_KEY, next);
+  }, [configMode]);
+
+  useEffect(() => {
+    const existing = readJson<UiPersistState>(UI_PERSIST_KEY);
+    const next: UiPersistState = {
+      lastMode: configMode,
+      lastOpenCodeNav: existing?.lastOpenCodeNav || 'model',
+      lastOmoNav: existing?.lastOmoNav || 'omo-agents',
+    };
+    if (configMode === 'opencode') {
+      next.lastOpenCodeNav = activeNav;
+    } else {
+      next.lastOmoNav = activeNav;
+    }
+    writeJson(UI_PERSIST_KEY, next);
+  }, [activeNav, configMode]);
+
+  // 切换配置模式时回到该模式的上次面板
   const handleConfigModeChange = (mode: ConfigMode) => {
     setConfigMode(mode);
-    // 切换到对应模式的第一个导航项
-    if (mode === 'opencode') {
-      setActiveNav('model');
-    } else {
-      setActiveNav('omo-agents');
+
+    const existing = readJson<UiPersistState>(UI_PERSIST_KEY);
+    const fallback: NavItem = mode === 'opencode' ? 'model' : 'omo-agents';
+    const candidate = mode === 'opencode' ? existing?.lastOpenCodeNav : existing?.lastOmoNav;
+    setActiveNav(isNavValidForMode(mode, candidate) ? candidate : fallback);
+  };
+
+  const isOpenCodeMode = configMode === 'opencode';
+  const isDirty = isOpenCodeMode ? openCodeStore.isDirty : omoStore.isDirty;
+  const isSaving = isOpenCodeMode ? openCodeStore.isLoading : omoStore.isLoading;
+
+  const dirtyGuardStored = useFeatureFlagsStore((s) => s.dirtyGuardEnabled);
+  const dirtyGuardEnabled = getEffectiveFeatureFlag('dirtyGuardEnabled', dirtyGuardStored);
+
+  // Sidebar "modified" markers (panel-level, session-scoped; cleared on save/reset)
+  useEffect(() => {
+    if (configMode !== 'opencode') return;
+    if (!openCodeStore.isDirty) return;
+    if (String(activeNav).startsWith('omo-')) return;
+    setModifiedOpenCode((prev) => (prev[activeNav] ? prev : { ...prev, [activeNav]: true }));
+  }, [openCodeStore.config]);
+
+  useEffect(() => {
+    if (configMode !== 'oh-my-opencode') return;
+    if (!omoStore.isDirty) return;
+    if (!String(activeNav).startsWith('omo-')) return;
+    setModifiedOmo((prev) => (prev[activeNav] ? prev : { ...prev, [activeNav]: true }));
+  }, [omoStore.config]);
+
+  useEffect(() => {
+    if (!openCodeStore.isDirty) setModifiedOpenCode({});
+  }, [openCodeStore.isDirty]);
+
+  useEffect(() => {
+    if (!omoStore.isDirty) setModifiedOmo({});
+  }, [omoStore.isDirty]);
+
+  // External signal: clear modified markers (e.g. undo apply) and re-mark current panel if still dirty.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ mode: ConfigMode }>).detail;
+      if (!detail?.mode) return;
+
+      if (detail.mode === 'opencode') {
+        setModifiedOpenCode({});
+        const stillDirty = useConfigStore.getState().isDirty;
+        if (configMode === 'opencode' && stillDirty && !String(activeNav).startsWith('omo-')) {
+          setModifiedOpenCode({ [activeNav]: true });
+        }
+      } else {
+        setModifiedOmo({});
+        const stillDirty = useOhMyOpenCodeStore.getState().isDirty;
+        if (configMode === 'oh-my-opencode' && stillDirty && String(activeNav).startsWith('omo-')) {
+          setModifiedOmo({ [activeNav]: true });
+        }
+      }
+    };
+
+    window.addEventListener('config-tool:modified-reset', handler as EventListener);
+    return () => window.removeEventListener('config-tool:modified-reset', handler as EventListener);
+  }, [activeNav, configMode]);
+
+  // Dirty guard for window/tab close (best-effort for both WebUI and Electron renderer)
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!dirtyGuardEnabled) return;
+      if (!isDirty) return;
+      e.preventDefault();
+      // Required for Chromium to show the native confirmation dialog.
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirtyGuardEnabled, isDirty]);
+
+  const requestConfigModeChange = (mode: ConfigMode) => {
+    if (mode === configMode) return;
+    if (dirtyGuardEnabled && isDirty) {
+      setPendingAction({ type: 'mode', nextMode: mode });
+      setUnsavedDialogOpen(true);
+      return;
     }
+    handleConfigModeChange(mode);
+  };
+
+  const requestNavChange = (nextNav: NavItem) => {
+    if (nextNav === activeNav) return;
+    if (dirtyGuardEnabled && isDirty) {
+      setPendingAction({ type: 'nav', nextNav });
+      setUnsavedDialogOpen(true);
+      return;
+    }
+    setActiveNav(nextNav);
+  };
+
+  const runPendingAction = () => {
+    const next = pendingAction;
+    if (!next) return;
+    setPendingAction(null);
+    setUnsavedDialogOpen(false);
+
+    if (next.type === 'mode') {
+      handleConfigModeChange(next.nextMode);
+    } else {
+      setActiveNav(next.nextNav);
+    }
+  };
+
+  const discardAndRunPending = () => {
+    if (isOpenCodeMode) {
+      useConfigStore.getState().resetConfig();
+    } else {
+      useOhMyOpenCodeStore.getState().resetConfig();
+    }
+    runPendingAction();
+  };
+
+  const saveAndRunPending = async () => {
+    if (isOpenCodeMode) {
+      await useConfigStore.getState().saveConfig();
+      const err = useConfigStore.getState().error;
+      if (err) {
+        toast({
+          title: '保存失败',
+          description: err,
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else {
+      await useOhMyOpenCodeStore.getState().saveConfig();
+      const err = useOhMyOpenCodeStore.getState().error;
+      if (err) {
+        toast({
+          title: '保存失败',
+          description: err,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    runPendingAction();
   };
 
   // 判断当前模式是否正在加载
@@ -156,10 +362,11 @@ export default function App() {
       {/* Sidebar */}
       <Sidebar
         activeItem={activeNav}
-        onItemChange={setActiveNav}
+        onItemChange={requestNavChange}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
         configMode={configMode}
+        modifiedItems={configMode === 'opencode' ? modifiedOpenCode : modifiedOmo}
       />
 
       {/* Main Area */}
@@ -167,7 +374,7 @@ export default function App() {
         {/* Header */}
         <Header
           configMode={configMode}
-          onConfigModeChange={handleConfigModeChange}
+          onConfigModeChange={requestConfigModeChange}
           onImport={() => setShowImportExport('import')}
           onExport={() => setShowImportExport('export')}
           onTemplates={() => setShowTemplates(true)}
@@ -200,6 +407,17 @@ export default function App() {
         mode={showImportExport}
         configMode={configMode}
         onClose={() => setShowImportExport(null)}
+      />
+
+      <UnsavedChangesDialog
+        open={unsavedDialogOpen}
+        isSaving={isSaving}
+        onCancel={() => {
+          setUnsavedDialogOpen(false);
+          setPendingAction(null);
+        }}
+        onDiscard={discardAndRunPending}
+        onSave={saveAndRunPending}
       />
 
       {/* Toast notifications */}

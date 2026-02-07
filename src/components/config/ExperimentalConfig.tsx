@@ -8,11 +8,20 @@ import { FlaskConical, AlertTriangle, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { ExperimentalConfig } from '@/types/config';
 import { useConfigStore } from '@/hooks/useConfig';
+import { useFeatureFlagsStore } from '@/hooks/useFeatureFlags';
 
 export function ExperimentalConfigPanel() {
   const { config, updateConfig } = useConfigStore();
   const experimental = config.experimental || {};
   const [newPrimaryTool, setNewPrimaryTool] = useState('');
+  const {
+    importWizardEnabled,
+    sidebarGroupingEnabled,
+    importWizardStep2EnhancementsEnabled,
+    dirtyGuardEnabled,
+    sidebarSearchEscEnhancedEnabled,
+    setFlag,
+  } = useFeatureFlagsStore();
 
   const updateExperimental = (updates: Partial<ExperimentalConfig>) => {
     updateConfig({
@@ -152,13 +161,78 @@ export function ExperimentalConfigPanel() {
               {experimental.primary_tools.map((tool, index) => (
                 <Badge key={index} variant="secondary" className="gap-1">
                   {tool}
-                  <button onClick={() => removePrimaryTool(index)}>
+                  <button type="button" className="focus-ring rounded-sm" onClick={() => removePrimaryTool(index)}>
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
               ))}
             </div>
           )}
+        </div>
+
+        {/* UI Feature Flags (vNext rollback) */}
+        <div className="space-y-4 pt-2 border-t">
+          <div>
+            <Label>UI Feature Flags</Label>
+            <p className="text-xs text-muted-foreground">
+              用于快速回退 vNext 的关键 UI 改动（不影响配置文件内容）
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>启用导入向导</Label>
+              <p className="text-xs text-muted-foreground">三步导入向导（预览/校验/撤销）</p>
+            </div>
+            <Switch
+              checked={importWizardEnabled}
+              onCheckedChange={(checked) => setFlag('importWizardEnabled', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>启用侧栏分组与搜索</Label>
+              <p className="text-xs text-muted-foreground">分组折叠 + 侧栏搜索（Cmd/Ctrl+K）</p>
+            </div>
+            <Switch
+              checked={sidebarGroupingEnabled}
+              onCheckedChange={(checked) => setFlag('sidebarGroupingEnabled', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>启用导入预览增强（Step2）</Label>
+              <p className="text-xs text-muted-foreground">筛选/长值展开/复制摘要（仅 UI 行为，可回滚）</p>
+            </div>
+            <Switch
+              checked={importWizardStep2EnhancementsEnabled}
+              onCheckedChange={(checked) => setFlag('importWizardStep2EnhancementsEnabled', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>启用未保存更改拦截（dirty guard）</Label>
+              <p className="text-xs text-muted-foreground">模式/面板切换拦截 + 关闭窗口提醒（仅 UI 行为，可回滚）</p>
+            </div>
+            <Switch
+              checked={dirtyGuardEnabled}
+              onCheckedChange={(checked) => setFlag('dirtyGuardEnabled', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>启用侧栏搜索 Esc 优化</Label>
+              <p className="text-xs text-muted-foreground">有 query 时先清空并保持焦点；无 query 再退出焦点</p>
+            </div>
+            <Switch
+              checked={sidebarSearchEscEnhancedEnabled}
+              onCheckedChange={(checked) => setFlag('sidebarSearchEscEnhancedEnabled', checked)}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

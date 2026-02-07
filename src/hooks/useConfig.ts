@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { OpenCodeConfig } from '@/types/config';
 import { DEFAULT_CONFIG } from '@/lib/defaults';
+import { deepMerge } from '@/lib/deepMerge';
+import { hasPostApplyEdits } from '@/lib/hasPostApplyEdits';
 
 interface ConfigState {
   // Current config being edited
@@ -19,6 +21,11 @@ interface ConfigState {
   isLoading: boolean;
   error: string | null;
 
+  // One-level undo snapshot for apply/import flows
+  lastApplySnapshot: OpenCodeConfig | null;
+  lastApplyLabel: string | null;
+  lastApplyAppliedConfig: OpenCodeConfig | null;
+
   // Actions
   setConfig: (config: OpenCodeConfig) => void;
   updateConfig: (partial: Partial<OpenCodeConfig>) => void;
@@ -26,6 +33,9 @@ interface ConfigState {
   loadConfig: (path?: string) => Promise<void>;
   saveConfig: () => Promise<void>;
   importConfig: (json: string) => void;
+  applyImportedConfig: (incoming: OpenCodeConfig, strategy: 'overwrite' | 'merge') => void;
+  undoLastApply: () => void;
+  hasPostApplyEdits: () => boolean;
   exportConfig: () => string;
   applyTemplate: (config: OpenCodeConfig) => void;
 
@@ -103,6 +113,10 @@ export const useConfigStore = create<ConfigState>()(
       isDirty: false,
       isLoading: false,
       error: null,
+
+      lastApplySnapshot: null,
+      lastApplyLabel: null,
+      lastApplyAppliedConfig: null,
 
       setConfig: (config) => {
         set({
@@ -216,6 +230,40 @@ export const useConfigStore = create<ConfigState>()(
         } catch (error) {
           set({ error: 'Invalid JSON format' });
         }
+      },
+
+      applyImportedConfig: (incoming, strategy) => {
+        const current = get().config;
+        const snapshot = structuredClone(current);
+        const nextConfig = strategy === 'overwrite'
+          ? { ...incoming }
+          : deepMerge(current as Record<string, unknown>, incoming as Record<string, unknown>) as OpenCodeConfig;
+
+        set({
+          config: nextConfig,
+          isDirty: JSON.stringify(nextConfig) !== JSON.stringify(get().originalConfig),
+          error: null,
+          lastApplySnapshot: snapshot,
+          lastApplyLabel: 'import',
+          lastApplyAppliedConfig: structuredClone(nextConfig),
+        });
+      },
+
+      undoLastApply: () => {
+        const snapshot = get().lastApplySnapshot;
+        if (!snapshot) return;
+        set({
+          config: snapshot,
+          isDirty: JSON.stringify(snapshot) !== JSON.stringify(get().originalConfig),
+          lastApplySnapshot: null,
+          lastApplyLabel: null,
+          lastApplyAppliedConfig: null,
+        });
+      },
+
+      hasPostApplyEdits: () => {
+        const applied = get().lastApplyAppliedConfig;
+        return hasPostApplyEdits(get().config, applied);
       },
 
       exportConfig: () => {

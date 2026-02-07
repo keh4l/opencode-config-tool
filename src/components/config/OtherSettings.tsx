@@ -1,8 +1,8 @@
 // src/components/config/OtherSettings.tsx
 import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { SettingRow } from '@/components/layout/SettingRow';
 import {
   Select,
   SelectContent,
@@ -19,13 +19,10 @@ export function OtherSettings() {
     <div className="space-y-6">
       <ConfigCard title="分享设置" icon={Share2}>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>会话分享</Label>
-              <p className="text-sm text-muted-foreground">
-                控制是否允许分享会话
-              </p>
-            </div>
+          <SettingRow
+            label="会话分享"
+            description="控制是否允许分享会话"
+          >
             <Select
               value={config.share || 'auto'}
               onValueChange={(value: 'manual' | 'auto' | 'disabled') => updateConfig({ share: value })}
@@ -39,41 +36,34 @@ export function OtherSettings() {
                 <SelectItem value="disabled">禁用</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </SettingRow>
         </div>
       </ConfigCard>
 
       <ConfigCard title="更新设置" icon={RefreshCw}>
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>自动更新</Label>
-            <p className="text-sm text-muted-foreground">
-              启用后 OpenCode 将自动检查并安装更新
-            </p>
-          </div>
+        <SettingRow
+          label="自动更新"
+          description="启用后 OpenCode 将自动检查并安装更新"
+        >
           <Switch
             checked={config.autoupdate === true || config.autoupdate === 'notify' || config.autoupdate === undefined}
             onCheckedChange={(checked) => updateConfig({ autoupdate: checked ? true : false })}
           />
-        </div>
+        </SettingRow>
       </ConfigCard>
 
       <ConfigCard title="模型配置" icon={Settings}>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>默认模型</Label>
-              <p className="text-sm text-muted-foreground">
-                {config.model || '未设置'}
-              </p>
+          <SettingRow label="默认模型" description="当前默认模型（只读）">
+            <div className="text-sm text-muted-foreground font-mono">
+              {config.model || '未设置'}
             </div>
-            <div className="space-y-2">
-              <Label>小模型</Label>
-              <p className="text-sm text-muted-foreground">
-                {config.small_model || '未设置'}
-              </p>
+          </SettingRow>
+          <SettingRow label="小模型" description="当前小模型（只读）">
+            <div className="text-sm text-muted-foreground font-mono">
+              {config.small_model || '未设置'}
             </div>
-          </div>
+          </SettingRow>
           <p className="text-xs text-muted-foreground">
             模型配置请在 "模型配置" 页面进行设置
           </p>

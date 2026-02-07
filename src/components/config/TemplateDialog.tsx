@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
 import { BUILTIN_TEMPLATES, type ConfigTemplate } from '@/lib/templates';
+import { redactConfig } from '@/lib/sensitiveRedaction';
 import {
   Dialog,
   DialogContent,
@@ -103,7 +104,7 @@ export function TemplateDialog({ open, onOpenChange }: TemplateDialogProps) {
 
           <div className="flex-1 overflow-y-auto">
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-              <code>{JSON.stringify(selectedTemplate.config, null, 2)}</code>
+              <code>{JSON.stringify(redactConfig(selectedTemplate.config), null, 2)}</code>
             </pre>
           </div>
 
@@ -152,7 +153,7 @@ export function TemplateDialog({ open, onOpenChange }: TemplateDialogProps) {
                 {selectedTemplate.description}
               </p>
               <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                <span className="text-xs px-2 py-1 rounded bg-accent text-accent-foreground">
                   {categories.find((c) => c.id === selectedTemplate.category)?.name}
                 </span>
                 <Button
@@ -232,7 +233,7 @@ export function TemplateDialog({ open, onOpenChange }: TemplateDialogProps) {
                     {templates.map((template) => (
                       <div
                         key={template.id}
-                        className="group relative p-4 rounded-lg border border-border hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        className="group relative p-4 rounded-lg border border-border hover:border-ring hover:bg-accent transition-colors"
                       >
                         <div
                           className="cursor-pointer"

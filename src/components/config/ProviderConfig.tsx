@@ -2,9 +2,14 @@
 import { useState } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
+import { SettingRow } from '@/components/layout/SettingRow';
+import { ConfigSection } from '@/components/layout/ConfigSection';
 import { Button } from '@/components/ui/button';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +32,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Server, Plus, Trash2, Edit, Globe, Settings2, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Server, Plus, Trash2, Edit, Globe, Settings2, X, ChevronDown, Sparkles, Eye, EyeOff, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import type { ProviderConfig as ProviderConfigType, ModelConfig, ModelModality, ProviderOptions } from '@/types/config';
@@ -248,6 +253,7 @@ const emptyProvider: ProviderFormData = {
 
 export function ProviderConfig() {
   const { config, addProvider, updateProvider, removeProvider } = useConfigStore();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<ProviderFormData | null>(null);
   const [newModelId, setNewModelId] = useState('');
@@ -262,7 +268,19 @@ export function ProviderConfig() {
   const [newModelHeaderKey, setNewModelHeaderKey] = useState<Record<string, string>>({});
   const [newModelHeaderValue, setNewModelHeaderValue] = useState<Record<string, string>>({});
 
+  // API Key 安全显示：默认隐藏；首次显示需确认（每会话一次）
+  const [apiKeyRevealed, setApiKeyRevealed] = useState(false);
+  const [apiKeyRevealConfirmOpen, setApiKeyRevealConfirmOpen] = useState(false);
+  const [apiKeyRevealConfirmed, setApiKeyRevealConfirmed] = useState(false);
+
+  // 保存尝试后才提示“未填写 API Key”
+  const [providerSaveAttempted, setProviderSaveAttempted] = useState(false);
+
   const providers = config.provider || {};
+
+  const isEnvVarSyntax = (value: string): boolean => {
+    return /^\s*\$\{\s*[A-Za-z_][A-Za-z0-9_]*\s*\}\s*$/.test(value);
+  };
 
   const handleAddProvider = () => {
     setEditingProvider({ ...emptyProvider });
@@ -303,6 +321,7 @@ export function ProviderConfig() {
 
   const handleSaveProvider = () => {
     if (!editingProvider || !editingProvider.id) return;
+    setProviderSaveAttempted(true);
 
     const isModelModalityValue = (value: unknown): value is ModelModality =>
       typeof value === 'string' && MODEL_MODALITIES.includes(value as ModelModality);
@@ -582,7 +601,7 @@ export function ProviderConfig() {
                 <AccordionItem key={id} value={id}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Server className="h-4 w-4 text-blue-500" />
+                    <Server className="h-4 w-4 text-info" />
                     <span className="font-medium text-foreground">{provider.name || id}</span>
                     {provider.options?.baseURL && (
                       <span className="text-xs text-muted-foreground">
@@ -658,10 +677,9 @@ export function ProviderConfig() {
           {BUILTIN_PROVIDERS.filter(id => !providers[id]).map((id) => {
             const info = PROVIDER_INFO[id];
             return (
-              <Button
+              <SelectableCard
                 key={id}
-                variant="outline"
-                className="h-auto py-3 flex flex-col items-start"
+                className="p-3 h-auto flex flex-col items-start"
                 onClick={() => {
                   addProvider(id, {
                     name: info?.name || id,
@@ -670,14 +688,25 @@ export function ProviderConfig() {
               >
                 <span className="font-medium text-foreground">{info?.name || id}</span>
                 <span className="text-xs text-muted-foreground">{info?.description}</span>
-              </Button>
+              </SelectableCard>
             );
           })}
         </div>
       </ConfigCard>
 
       {/* Provider 编辑对话框 */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setEditingProvider(null);
+            setProviderSaveAttempted(false);
+            setApiKeyRevealed(false);
+            setApiKeyRevealConfirmOpen(false);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -690,10 +719,16 @@ export function ProviderConfig() {
 
           {editingProvider && (
             <div className="space-y-6 py-4">
-              {/* 基本信息 */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-id">提供商 ID</Label>
+              <ConfigSection
+                title="基本信息"
+                description="用于标识与展示该模型提供商"
+              >
+                <div className="rounded-lg border px-3 divide-y">
+                  <SettingRow
+                    label="提供商 ID"
+                    description="用于配置中的 key（建议小写字母/数字/短横线）"
+                    htmlFor="provider-id"
+                  >
                     <Input
                       id="provider-id"
                       value={editingProvider.id}
@@ -701,111 +736,213 @@ export function ProviderConfig() {
                       placeholder="my-provider"
                       disabled={!!providers[editingProvider.id]}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-name">显示名称</Label>
+                  </SettingRow>
+
+                  <SettingRow
+                    label="显示名称"
+                    description="用于界面展示"
+                    htmlFor="provider-name"
+                  >
                     <Input
                       id="provider-name"
                       value={editingProvider.name}
                       onChange={(e) => setEditingProvider({ ...editingProvider, name: e.target.value })}
                       placeholder="我的自定义提供商"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-api">提供商 API 标识（api，可选）</Label>
+                  </SettingRow>
+
+                  <SettingRow
+                    label="提供商 API 标识（可选）"
+                    description="例如 openai（用于部分兼容逻辑）"
+                    htmlFor="provider-api"
+                  >
                     <Input
                       id="provider-api"
                       value={editingProvider.api}
                       onChange={(e) => setEditingProvider({ ...editingProvider, api: e.target.value })}
-                      placeholder="例如: openai"
+                      placeholder="例如：openai"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-schema-id">提供商内部 ID（id，可选）</Label>
+                  </SettingRow>
+
+                  <SettingRow
+                    label="提供商内部 ID（可选）"
+                    description="可与配置 key 不同"
+                    htmlFor="provider-schema-id"
+                  >
                     <Input
                       id="provider-schema-id"
                       value={editingProvider.schemaId}
                       onChange={(e) => setEditingProvider({ ...editingProvider, schemaId: e.target.value })}
                       placeholder="可与配置 key 不同"
                     />
-                  </div>
+                  </SettingRow>
                 </div>
+              </ConfigSection>
 
-              {/* NPM 包 */}
-              <div className="space-y-2">
-                <Label htmlFor="provider-npm">NPM 包</Label>
-                <Select
-                  value={editingProvider.npm}
-                  onValueChange={(value) => setEditingProvider({ ...editingProvider, npm: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {/* 通用兼容包 */}
-                    <SelectItem value="@ai-sdk/openai-compatible">@ai-sdk/openai-compatible (OpenAI 兼容)</SelectItem>
+              <ConfigSection
+                title="NPM 包"
+                description="选择与您的 AI 提供商对应的 SDK 包；大多数第三方服务可使用 OpenAI 兼容包"
+              >
+                <div className="rounded-lg border px-3">
+                  <SettingRow label="NPM 包" htmlFor="provider-npm" className="py-3">
+                    <Select
+                      value={editingProvider.npm}
+                      onValueChange={(value) => setEditingProvider({ ...editingProvider, npm: value })}
+                    >
+                      <SelectTrigger id="provider-npm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <SelectItem value="@ai-sdk/openai-compatible">@ai-sdk/openai-compatible (OpenAI 兼容)</SelectItem>
+                        <SelectItem value="@ai-sdk/openai">@ai-sdk/openai (OpenAI)</SelectItem>
+                        <SelectItem value="@ai-sdk/anthropic">@ai-sdk/anthropic (Anthropic)</SelectItem>
+                        <SelectItem value="@ai-sdk/google">@ai-sdk/google (Google Gemini)</SelectItem>
+                        <SelectItem value="@ai-sdk/google-vertex">@ai-sdk/google-vertex (Google Vertex AI)</SelectItem>
+                        <SelectItem value="@ai-sdk/azure">@ai-sdk/azure (Azure OpenAI)</SelectItem>
+                        <SelectItem value="@ai-sdk/amazon-bedrock">@ai-sdk/amazon-bedrock (AWS Bedrock)</SelectItem>
+                        <SelectItem value="@ai-sdk/xai">@ai-sdk/xai (xAI Grok)</SelectItem>
+                        <SelectItem value="@ai-sdk/groq">@ai-sdk/groq (Groq)</SelectItem>
+                        <SelectItem value="@ai-sdk/mistral">@ai-sdk/mistral (Mistral AI)</SelectItem>
+                        <SelectItem value="@ai-sdk/cohere">@ai-sdk/cohere (Cohere)</SelectItem>
+                        <SelectItem value="@ai-sdk/deepseek">@ai-sdk/deepseek (DeepSeek)</SelectItem>
+                        <SelectItem value="@ai-sdk/perplexity">@ai-sdk/perplexity (Perplexity)</SelectItem>
+                        <SelectItem value="@ai-sdk/togetherai">@ai-sdk/togetherai (Together AI)</SelectItem>
+                        <SelectItem value="@ai-sdk/fireworks">@ai-sdk/fireworks (Fireworks AI)</SelectItem>
+                        <SelectItem value="@ai-sdk/cerebras">@ai-sdk/cerebras (Cerebras)</SelectItem>
+                        <SelectItem value="@ai-sdk/replicate">@ai-sdk/replicate (Replicate)</SelectItem>
+                        <SelectItem value="@ai-sdk/fal">@ai-sdk/fal (Fal AI)</SelectItem>
+                        <SelectItem value="@ai-sdk/luma">@ai-sdk/luma (Luma AI)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
+                </div>
+              </ConfigSection>
 
-                    {/* 主流提供商 */}
-                    <SelectItem value="@ai-sdk/openai">@ai-sdk/openai (OpenAI)</SelectItem>
-                    <SelectItem value="@ai-sdk/anthropic">@ai-sdk/anthropic (Anthropic)</SelectItem>
-                    <SelectItem value="@ai-sdk/google">@ai-sdk/google (Google Gemini)</SelectItem>
-                    <SelectItem value="@ai-sdk/google-vertex">@ai-sdk/google-vertex (Google Vertex AI)</SelectItem>
-                    <SelectItem value="@ai-sdk/azure">@ai-sdk/azure (Azure OpenAI)</SelectItem>
-                    <SelectItem value="@ai-sdk/amazon-bedrock">@ai-sdk/amazon-bedrock (AWS Bedrock)</SelectItem>
-
-                    {/* 其他提供商 */}
-                    <SelectItem value="@ai-sdk/xai">@ai-sdk/xai (xAI Grok)</SelectItem>
-                    <SelectItem value="@ai-sdk/groq">@ai-sdk/groq (Groq)</SelectItem>
-                    <SelectItem value="@ai-sdk/mistral">@ai-sdk/mistral (Mistral AI)</SelectItem>
-                    <SelectItem value="@ai-sdk/cohere">@ai-sdk/cohere (Cohere)</SelectItem>
-                    <SelectItem value="@ai-sdk/deepseek">@ai-sdk/deepseek (DeepSeek)</SelectItem>
-                    <SelectItem value="@ai-sdk/perplexity">@ai-sdk/perplexity (Perplexity)</SelectItem>
-                    <SelectItem value="@ai-sdk/togetherai">@ai-sdk/togetherai (Together AI)</SelectItem>
-                    <SelectItem value="@ai-sdk/fireworks">@ai-sdk/fireworks (Fireworks AI)</SelectItem>
-                    <SelectItem value="@ai-sdk/cerebras">@ai-sdk/cerebras (Cerebras)</SelectItem>
-                    <SelectItem value="@ai-sdk/replicate">@ai-sdk/replicate (Replicate)</SelectItem>
-                    <SelectItem value="@ai-sdk/fal">@ai-sdk/fal (Fal AI)</SelectItem>
-                    <SelectItem value="@ai-sdk/luma">@ai-sdk/luma (Luma AI)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  选择与您的 AI 提供商对应的 SDK 包，大多数第三方服务可使用 OpenAI 兼容包
-                </p>
-              </div>
-
-              {/* API 配置 */}
-              <div className="space-y-4">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Settings2 className="h-4 w-4" />
-                  API 配置
-                </h4>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-baseurl">API 地址（baseURL）</Label>
+              <ConfigSection
+                title={(
+                  <span className="inline-flex items-center gap-2">
+                    <Settings2 className="h-4 w-4" />
+                    API 配置
+                  </span>
+                )}
+                description="配置 baseURL 与鉴权密钥（建议使用环境变量）"
+              >
+                <div className="rounded-lg border px-3 divide-y">
+                  <SettingRow
+                    label="API 地址（baseURL）"
+                    description="用于配置 API 服务的 baseURL"
+                    messages={{
+                      info: NPM_PACKAGE_INFO[editingProvider.npm]?.description || '输入 API 服务的 baseURL',
+                    }}
+                    htmlFor="provider-baseurl"
+                  >
                     <Input
                       id="provider-baseurl"
                       value={editingProvider.baseURL}
                       onChange={(e) => setEditingProvider({ ...editingProvider, baseURL: e.target.value })}
                       placeholder={NPM_PACKAGE_INFO[editingProvider.npm]?.placeholder || 'https://api.example.com/v1'}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {NPM_PACKAGE_INFO[editingProvider.npm]?.description || '输入 API 服务的baseURL'}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="provider-apikey">API 密钥（支持环境变量语法）</Label>
-                    <Input
-                      id="provider-apikey"
-                      value={editingProvider.apiKey}
-                      onChange={(e) => setEditingProvider({ ...editingProvider, apiKey: e.target.value })}
-                      placeholder={`\${${NPM_PACKAGE_INFO[editingProvider.npm]?.envVar || 'API_KEY'}}`}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      推荐使用环境变量: {NPM_PACKAGE_INFO[editingProvider.npm]?.envVar || 'API_KEY'}
-                    </p>
-                  </div>
+                  </SettingRow>
+
+                  <SettingRow
+                    label="API 密钥（支持环境变量语法）"
+                    description="用于鉴权；推荐使用环境变量避免明文写入"
+                    messages={{
+                      ...(providerSaveAttempted && !editingProvider.apiKey.trim()
+                        ? {
+                          warning: '未填写 API Key：如果你使用环境变量，请确保已在系统中正确设置。',
+                        }
+                        : {
+                          info: (
+                            <div className="space-y-1">
+                              <div>建议使用环境变量，避免将密钥写入配置文件。</div>
+                              <div className="text-[11px] opacity-90">
+                                例如：{`\${${NPM_PACKAGE_INFO[editingProvider.npm]?.envVar || 'API_KEY'}}`}（支持环境变量语法）
+                              </div>
+                            </div>
+                          ),
+                        }),
+                    }}
+                    htmlFor="provider-apikey"
+                  >
+                    {(() => {
+                      const envVarName = NPM_PACKAGE_INFO[editingProvider.npm]?.envVar || 'API_KEY';
+                      const envSyntax = `\${${envVarName}}`;
+                      const isEnvVar = isEnvVarSyntax(editingProvider.apiKey);
+                      const inputType = isEnvVar ? 'text' : (apiKeyRevealed ? 'text' : 'password');
+
+                      return (
+                        <div className="flex items-center gap-2 w-full min-w-0">
+                          <Input
+                            id="provider-apikey"
+                            value={editingProvider.apiKey}
+                            onChange={(e) => setEditingProvider({ ...editingProvider, apiKey: e.target.value })}
+                            placeholder={envSyntax}
+                            type={inputType}
+                            className="flex-1 min-w-0"
+                            title={editingProvider.apiKey}
+                          />
+
+                          {!isEnvVar && (
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              aria-label={apiKeyRevealed ? '隐藏 API Key' : '显示 API Key'}
+                              title={apiKeyRevealed ? '隐藏 API Key' : '显示 API Key'}
+                              onClick={() => {
+                                if (apiKeyRevealed) {
+                                  setApiKeyRevealed(false);
+                                  return;
+                                }
+
+                                if (!editingProvider.apiKey.trim()) {
+                                  setApiKeyRevealed(true);
+                                  return;
+                                }
+
+                                if (!apiKeyRevealConfirmed) {
+                                  setApiKeyRevealConfirmOpen(true);
+                                  return;
+                                }
+
+                                setApiKeyRevealed(true);
+                              }}
+                            >
+                              {apiKeyRevealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          )}
+
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            aria-label="复制变量名"
+                            title="复制变量名"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(envVarName);
+                                toast({
+                                  title: '已复制变量名',
+                                  description: envVarName,
+                                });
+                              } catch (e) {
+                                toast({
+                                  title: '复制失败',
+                                  description: e instanceof Error ? e.message : '无法写入剪贴板',
+                                  variant: 'destructive',
+                                });
+                              }
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })()}
+                  </SettingRow>
                 </div>
-              </div>
+              </ConfigSection>
 
               {/* 模型过滤 */}
               <div className="space-y-4">
@@ -1016,7 +1153,7 @@ export function ProviderConfig() {
                     <Collapsible key={modelId} className="border border-border rounded-lg">
                       <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-purple-500" />
+                          <Sparkles className="h-4 w-4 text-brand-secondary" />
                           <span className="font-mono font-medium text-foreground">{modelId}</span>
                           {model.name && <span className="text-sm text-muted-foreground">({model.name})</span>}
                         </div>
@@ -1082,7 +1219,7 @@ export function ProviderConfig() {
                         </div>
 
                         {model.limit && (model.limit.context === undefined || model.limit.output === undefined) && (
-                          <p className="text-xs text-amber-500">
+                          <p className="text-xs text-warning">
                             规范要求 limit.context 和 limit.output 同时存在，否则保存时会忽略 limit。
                           </p>
                         )}
@@ -1910,6 +2047,20 @@ export function ProviderConfig() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={apiKeyRevealConfirmOpen}
+        title="显示 API Key？"
+        description="这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。"
+        confirmLabel="继续显示"
+        confirmVariant="destructive"
+        onCancel={() => setApiKeyRevealConfirmOpen(false)}
+        onConfirm={() => {
+          setApiKeyRevealConfirmOpen(false);
+          setApiKeyRevealConfirmed(true);
+          setApiKeyRevealed(true);
+        }}
+      />
 
       {/* 添加变体名称对话框 */}
       <Dialog open={variantDialogOpen} onOpenChange={setVariantDialogOpen}>

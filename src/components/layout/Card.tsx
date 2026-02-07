@@ -26,8 +26,8 @@ export function ConfigCard({ title, description, icon: Icon, children, actions, 
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+            <div className="p-2 bg-muted rounded-lg">
+              <Icon className="h-5 w-5 text-foreground" />
             </div>
           )}
           <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import { Palette, Check } from 'lucide-react';
 
 const BUILTIN_THEMES = [
@@ -33,23 +34,20 @@ export function ThemeSelector() {
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {BUILTIN_THEMES.map((theme) => (
-            <button
+            <SelectableCard
               key={theme.id}
+              selected={currentTheme === theme.id}
               onClick={() => handleThemeChange(theme.id)}
-              className={`relative p-4 rounded-lg border-2 transition-all text-left ${
-                currentTheme === theme.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-border hover:border-muted-foreground'
-              }`}
+              className="p-4"
             >
               {currentTheme === theme.id && (
                 <div className="absolute top-2 right-2">
-                  <Check className="h-4 w-4 text-blue-500" />
+                  <Check className="h-4 w-4 text-ring" />
                 </div>
               )}
               <div className="font-medium text-foreground">{theme.name}</div>
               <div className="text-xs text-muted-foreground">{theme.description}</div>
-            </button>
+            </SelectableCard>
           ))}
         </div>
       </ConfigCard>
@@ -65,8 +63,8 @@ export function ThemeSelector() {
             />
           </div>
           <p className="text-sm text-muted-foreground">
-            自定义主题文件放置在 <code className="text-blue-500">~/.config/opencode/themes/</code> 或
-            <code className="text-blue-500">.opencode/themes/</code> 目录下
+            自定义主题文件放置在 <code className="text-info">~/.config/opencode/themes/</code> 或
+            <code className="text-info">.opencode/themes/</code> 目录下
           </p>
         </div>
       </ConfigCard>

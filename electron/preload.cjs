@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeFile: (path, content) => ipcRenderer.invoke('write-file', path, content),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   saveFileDialog: (defaultPath) => ipcRenderer.invoke('save-file-dialog', defaultPath),
+  showItemInFolder: (path) => ipcRenderer.invoke('show-item-in-folder', path),
   getOpencodeModels: (provider) => ipcRenderer.invoke('opencode-models', provider),
 
   platform: process.platform,

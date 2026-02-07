@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
+import { SettingRow } from '@/components/layout/SettingRow';
+import { ConfigSection } from '@/components/layout/ConfigSection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import {
   Select,
   SelectContent,
@@ -149,18 +151,21 @@ function RuleEditor({ tool, rule, supportsGlob, onSave, onClose }: RuleEditorPro
       <div className="space-y-6 py-4">
         {/* 模式选择 */}
         {supportsGlob ? (
-          <div className="space-y-2">
-            <Label>权限模式</Label>
-            <Select value={mode} onValueChange={(v: 'simple' | 'glob') => setMode(v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simple">简单模式 (统一权限)</SelectItem>
-                <SelectItem value="glob">Glob 模式 (模式匹配)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <ConfigSection title="模式" description="选择统一权限或按模式匹配">
+            <div className="rounded-lg border px-3">
+              <SettingRow label="权限模式" description="simple：统一权限；glob：按规则匹配" className="py-3">
+                <Select value={mode} onValueChange={(v: 'simple' | 'glob') => setMode(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="simple">简单模式（统一权限）</SelectItem>
+                    <SelectItem value="glob">Glob 模式（模式匹配）</SelectItem>
+                  </SelectContent>
+                </Select>
+              </SettingRow>
+            </div>
+          </ConfigSection>
         ) : (
           <p className="text-xs text-muted-foreground">
             该工具仅支持简单模式（ask / allow / deny）。
@@ -168,35 +173,47 @@ function RuleEditor({ tool, rule, supportsGlob, onSave, onClose }: RuleEditorPro
         )}
 
         {mode === 'simple' ? (
-          <div className="space-y-2">
-            <Label>权限值</Label>
-            <Select value={simpleValue} onValueChange={(v: PermissionValue) => setSimpleValue(v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="allow">✅ 允许 (Allow)</SelectItem>
-                <SelectItem value="ask">❓ 询问 (Ask)</SelectItem>
-                <SelectItem value="deny">❌ 拒绝 (Deny)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ) : supportsGlob ? (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                value={newPattern}
-                onChange={(e) => setNewPattern(e.target.value)}
-                placeholder={tool === 'bash' ? 'git *' : '*.md'}
-                className="flex-1"
-              />
-              <Button onClick={handleAddGlobRule} disabled={!newPattern}>
-                <Plus className="h-4 w-4 mr-2" />
-                添加规则
-              </Button>
+          <ConfigSection title="权限值" description="决定该工具的默认行为">
+            <div className="rounded-lg border px-3">
+              <SettingRow label="权限值" description="allow / ask / deny" className="py-3">
+                <Select value={simpleValue} onValueChange={(v: PermissionValue) => setSimpleValue(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="allow">✅ 允许</SelectItem>
+                    <SelectItem value="ask">❓ 询问</SelectItem>
+                    <SelectItem value="deny">❌ 拒绝</SelectItem>
+                  </SelectContent>
+                </Select>
+              </SettingRow>
             </div>
+          </ConfigSection>
+        ) : supportsGlob ? (
+          <ConfigSection title="规则列表" description="规则按顺序匹配，最后匹配的规则生效">
+            <div className="space-y-4">
+              <div className="rounded-lg border px-3">
+                <SettingRow
+                  label="新增规则"
+                  description="示例：bash 用 git *；文件类用 *.md"
+                  className="py-3"
+                >
+                  <div className="flex gap-2 w-full">
+                    <Input
+                      value={newPattern}
+                      onChange={(e) => setNewPattern(e.target.value)}
+                      placeholder={tool === 'bash' ? 'git *' : '*.md'}
+                      className="flex-1 font-mono"
+                    />
+                    <Button onClick={handleAddGlobRule} disabled={!newPattern}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      添加
+                    </Button>
+                  </div>
+                </SettingRow>
+              </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               {globRules.map((rule, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                   <Input
@@ -232,7 +249,8 @@ function RuleEditor({ tool, rule, supportsGlob, onSave, onClose }: RuleEditorPro
             <p className="text-xs text-muted-foreground">
               提示: 规则按顺序匹配，最后匹配的规则生效。建议将 "*" 放在最前面作为默认值。
             </p>
-          </div>
+            </div>
+          </ConfigSection>
         ) : null}
       </div>
 
@@ -276,7 +294,7 @@ export function PermissionEditor() {
     const value = typeof rule === 'string' ? rule : Object.values(rule)[0];
     if (value === 'allow') return 'text-green-500';
     if (value === 'deny') return 'text-red-500';
-    return 'text-amber-500';
+    return 'text-warning';
   };
 
   const filteredTools = TOOL_PERMISSIONS.filter(tool =>
@@ -354,9 +372,9 @@ export function PermissionEditor() {
                 const toolKey = tool as EditablePermissionTool;
                 const permission = (permissions[toolKey as keyof ToolPermissions] as PermissionRule | undefined) ?? globalDefault;
                 return (
-                  <div
+                  <SelectableCard
                     key={tool}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted"
+                    className="flex items-center justify-between p-3 bg-muted/50 hover:bg-muted"
                     onClick={() => setEditingTool(toolKey)}
                   >
                     <div>
@@ -366,7 +384,7 @@ export function PermissionEditor() {
                     <span className={`text-sm ${getPermissionColor(permission)}`}>
                       {getPermissionDisplay(permission)}
                     </span>
-                  </div>
+                  </SelectableCard>
                 );
               })}
             </div>

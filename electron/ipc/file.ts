@@ -1,5 +1,5 @@
 // electron/ipc/file.ts
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -210,6 +210,13 @@ export function setupFileIpc(): void {
       ],
     });
     return result.canceled ? null : result.filePath;
+  });
+
+  // Reveal a file in the OS file manager (Electron-only UX helper)
+  ipcMain.handle('show-item-in-folder', async (_, filePath: string) => {
+    const expandedPath = filePath.replace(/^~/, os.homedir());
+    shell.showItemInFolder(expandedPath);
+    return true;
   });
 
   ipcMain.handle('opencode-models', async (_, provider?: string): Promise<OpencodeModelsResult> => {

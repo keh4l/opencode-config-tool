@@ -142,7 +142,11 @@ export function OmoBackgroundPanel() {
               {Object.entries(config.background_task.modelConcurrency).map(([modelId, concurrency]) => (
                 <Badge key={modelId} variant="secondary" className="gap-1 pl-2">
                   <span className="font-mono text-xs">{modelId}: {concurrency}</span>
-                  <button onClick={() => handleRemoveModelConcurrency(modelId)} className="ml-1 hover:text-destructive">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveModelConcurrency(modelId)}
+                    className="ml-1 focus-ring rounded-sm hover:text-destructive"
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
