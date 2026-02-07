@@ -387,7 +387,7 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
         {/* Search (filters sidebar items only; not panel content) */}
         {!collapsed && (
           <div className="px-2">
-            <div className="relative">
+            <div className="relative w-full max-w-full min-w-0">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 ref={searchRef}
@@ -395,7 +395,10 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索…"
                 aria-describedby="sidebar-search-help"
-                className={cn('pl-8', query.trim() ? 'pr-10' : 'pr-24 sm:pr-32 lg:pr-56')}
+                className={cn(
+                  'pl-8 w-full max-w-full min-w-0 focus-visible:ring-inset focus-visible:ring-offset-0',
+                  query.trim() ? 'pr-10' : 'pr-24 sm:pr-32 lg:pr-56'
+                )}
               />
 
               {/* 读屏提示：不要把关键信息塞进 placeholder */}

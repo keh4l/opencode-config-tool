@@ -1084,3 +1084,33 @@ How to verify：
 Notes：
 
 - 右侧辅助提示使用 `pointer-events-none`，不会干扰输入框交互。
+
+---
+
+## 31) 2026-02-07 14:02（CST）修复侧栏搜索框焦点态视觉越界（锁宽 + ring inset/offset0）
+
+Why：
+
+- 侧栏搜索框加入右侧提示后，在部分宽度下出现“蓝色 focus ring/边框视觉越过侧栏分割线”的回归。
+- 根因优先级：
+  - shadcn Input 默认 `focus-visible:ring-offset-2` 会向外扩张（视觉越界），即使真实布局宽度未超；
+  - 外层容器未显式锁定 `w-full/max-w-full/min-w-0` 时，在 flex 场景更容易出现溢出。
+
+What：
+
+- 锁定搜索框容器与输入宽度：wrapper 增加 `w-full max-w-full min-w-0`。
+- 修正焦点 ring 外扩：覆盖 Input focus 样式为 `focus-visible:ring-inset focus-visible:ring-offset-0`，确保焦点态不跨越侧栏边界线。
+- 右侧提示仍为 absolute overlay（不参与布局，不撑宽）。
+
+Where：
+
+- `src/components/layout/Sidebar.tsx`
+
+How to verify：
+
+- 缩放窗口/侧栏宽度：输入框本体与 focus ring 都不越过右侧分割线。
+- 聚焦输入框、Esc/清除按钮行为保持不变。
+
+验证：
+
+- `npm run check`：通过。
