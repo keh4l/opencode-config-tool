@@ -1,0 +1,72 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    env:
+      # Avoid code-sign discovery failures on CI.
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Prepare output directory (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: mkdir -p /tmp/opencode-release
+
+      - name: Prepare output directory (Windows)
+        if: runner.os == 'Windows'
+        run: mkdir -p /c/tmp/opencode-release
+        shell: bash
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Smoke (logic)
+        run: npm run smoke:logic
+
+      - name: Build distributables
+        run: npm run electron:dist
+
+      - name: Upload assets to GitHub Release (macOS)
+        if: runner.os == 'macOS'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            /tmp/opencode-release/*.dmg
+            /tmp/opencode-release/*.zip
+
+      - name: Upload assets to GitHub Release (Windows)
+        if: runner.os == 'Windows'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            C:\\tmp\\opencode-release\\*.exe
+
+      - name: Upload assets to GitHub Release (Linux)
+        if: runner.os == 'Linux'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            /tmp/opencode-release/*.AppImage
+            /tmp/opencode-release/*.deb

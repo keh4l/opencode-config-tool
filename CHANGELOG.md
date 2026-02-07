@@ -17,6 +17,21 @@
 
 ---
 
+## [1.0.9] - 2026-02-07
+
+### 新增
+- ✨ **导入向导（Import Wizard）**：导入配置改为更清晰的分步流程，导入前提供更明确的校验与预览
+- ✨ **会话级敏感信息门禁**：对“明文展示 / 复制 / 导出（下载）”统一弹窗确认（每会话每类只提示一次）
+
+### 改进
+- 🎛️ **导出/预览默认安全**：默认展示与导出为脱敏内容；需要明文时必须显式选择并确认
+- 🧭 **侧栏搜索可用性**：placeholder 更短更稳，快捷键提示不撑宽；`@modified` 相关提示在窄侧栏下仍可见
+
+### 安全
+- 🔒 **敏感信息防误外带**：复制/下载包含敏感信息前增加明确提示与确认，取消即不外带
+
+---
+
 ## [1.0.8] - 2026-02-06
 
 ### 新增
@@ -302,7 +317,8 @@
 
 ---
 
-[未发布]: https://github.com/a246145/opencode-config-tool/compare/v1.0.8...HEAD
+[未发布]: https://github.com/a246145/opencode-config-tool/compare/v1.0.9...HEAD
+[1.0.9]: https://github.com/a246145/opencode-config-tool/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/a246145/opencode-config-tool/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/a246145/opencode-config-tool/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/a246145/opencode-config-tool/compare/v1.0.5...v1.0.6

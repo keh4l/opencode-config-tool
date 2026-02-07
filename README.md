@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.8-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.9-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
@@ -164,19 +164,19 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 ### 方式一：下载预编译版本（推荐）
 
 #### Windows
-1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-Setup-x.x.x.exe`
 3. 双击安装程序，按提示完成安装
 4. 从开始菜单启动应用
 
 #### macOS
-1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-x.x.x.dmg`
 3. 打开 DMG 文件，将应用拖入 Applications 文件夹
 4. 从启动台启动应用
 
 #### Linux
-1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-x.x.x.AppImage`
 3. 添加执行权限：
    ```bash
@@ -198,7 +198,7 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/keh4l/opencode-config-tool.git
+git clone https://github.com/a246145/opencode-config-tool.git
    cd opencode-config-tool
    ```
 
@@ -884,9 +884,9 @@ SOFTWARE.
 
 ## 📞 联系方式
 
-- **项目主页**：[GitHub Repository](https://github.com/keh4l/opencode-config-tool)
-- **问题反馈**：[GitHub Issues](https://github.com/keh4l/opencode-config-tool/issues)
-- **功能建议**：[GitHub Discussions](https://github.com/keh4l/opencode-config-tool/discussions)
+- **项目主页**：[GitHub Repository](https://github.com/a246145/opencode-config-tool)
+- **问题反馈**：[GitHub Issues](https://github.com/a246145/opencode-config-tool/issues)
+- **功能建议**：[GitHub Discussions](https://github.com/a246145/opencode-config-tool/discussions)
 
 ---
 
@@ -894,7 +894,12 @@ SOFTWARE.
 
 查看完整的版本更新历史和变更记录：**[CHANGELOG.md](CHANGELOG.md)**
 
-### 最新版本 v1.0.8 (2026-02-06)
+### 最新版本 v1.0.9 (2026-02-07)
+- 🔒 **敏感信息外带门禁统一**：对“明文展示 / 复制 / 导出（下载）”做会话级确认；默认脱敏，取消即不外带
+- 🧾 **导入体验升级**：导入对话框加入导入向导，分步提示并在导入前做更明确的校验/预览
+- 🧭 **侧栏搜索可用性修复**：placeholder 不再被挤压；快捷键提示不溢出；`@modified` 提示可换行显示，窄宽也可发现
+
+### v1.0.8 (2026-02-06)
 - ✨ **Provider 深层配置补齐**：支持编辑 cost、输入输出模态（modalities）、交错输出（interleaved）、请求头（model.headers）等
 - 🎛️ **模态选择改进**：modalities 改为“标签多选”，不再依赖手动输入逗号
 - 🛠️ **模型列表错误更友好**：`opencode models` 失败时返回中文修复建议（例如缓存缺失时建议清理 `~/.cache/opencode`）
