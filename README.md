@@ -164,19 +164,19 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 ### 方式一：下载预编译版本（推荐）
 
 #### Windows
-1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-Setup-x.x.x.exe`
 3. 双击安装程序，按提示完成安装
 4. 从开始菜单启动应用
 
 #### macOS
-1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-x.x.x.dmg`
 3. 打开 DMG 文件，将应用拖入 Applications 文件夹
 4. 从启动台启动应用
 
 #### Linux
-1. 前往 [Releases](https://github.com/a246145/opencode-config-tool/releases) 页面
+1. 前往 [Releases](https://github.com/keh4l/opencode-config-tool/releases) 页面
 2. 下载最新版本的 `OpenCode-Config-Tool-x.x.x.AppImage`
 3. 添加执行权限：
    ```bash
@@ -198,7 +198,7 @@ OpenCode 懒人配置工具是一个基于 Electron + React 的桌面应用程�
 
 1. **克隆仓库**
    ```bash
-git clone https://github.com/a246145/opencode-config-tool.git
+git clone https://github.com/keh4l/opencode-config-tool.git
    cd opencode-config-tool
    ```
 
@@ -884,9 +884,9 @@ SOFTWARE.
 
 ## 📞 联系方式
 
-- **项目主页**：[GitHub Repository](https://github.com/a246145/opencode-config-tool)
-- **问题反馈**：[GitHub Issues](https://github.com/a246145/opencode-config-tool/issues)
-- **功能建议**：[GitHub Discussions](https://github.com/a246145/opencode-config-tool/discussions)
+- **项目主页**：[GitHub Repository](https://github.com/keh4l/opencode-config-tool)
+- **问题反馈**：[GitHub Issues](https://github.com/keh4l/opencode-config-tool/issues)
+- **功能建议**：[GitHub Discussions](https://github.com/keh4l/opencode-config-tool/discussions)
 
 ---
 
