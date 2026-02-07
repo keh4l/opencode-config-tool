@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { redactConfig } from '@/lib/sensitiveRedaction';
 import { FieldMessage } from '@/components/layout/FieldMessage';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useSensitiveConsent } from '@/hooks/useSensitiveConsent';
 
 interface JsonPreviewProps {
   onClose: () => void;
@@ -17,9 +18,9 @@ export function JsonPreview({ onClose, includeSensitive = false }: JsonPreviewPr
   const config = useConfigStore((s) => s.config);
   const [copied, setCopied] = useState(false);
 
+  const { ensureConsent, dialogProps } = useSensitiveConsent();
+
   const [showSensitive, setShowSensitive] = useState(includeSensitive);
-  const [showSensitiveConfirmOpen, setShowSensitiveConfirmOpen] = useState(false);
-  const [showSensitiveConfirmed, setShowSensitiveConfirmed] = useState(false);
 
   const safeConfig = useMemo(() => {
     return showSensitive ? config : redactConfig(config);
@@ -30,6 +31,14 @@ export function JsonPreview({ onClose, includeSensitive = false }: JsonPreviewPr
   }, [safeConfig]);
 
   const handleCopy = async () => {
+    if (showSensitive) {
+      const ok = await ensureConsent('copySensitive', {
+        title: '复制包含敏感信息？',
+        description: '复制到剪贴板将包含敏感信息（如 API Key/Token）。请确认当前环境安全，避免误粘贴或泄露。',
+        confirmLabel: '继续复制',
+      });
+      if (!ok) return;
+    }
     await navigator.clipboard.writeText(json);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -48,18 +57,28 @@ export function JsonPreview({ onClose, includeSensitive = false }: JsonPreviewPr
                 setShowSensitive(false);
                 return;
               }
-              if (!showSensitiveConfirmed) {
-                setShowSensitiveConfirmOpen(true);
-                return;
-              }
-              setShowSensitive(true);
+              (async () => {
+                const ok = await ensureConsent('revealSensitive', {
+                  title: '显示敏感信息？',
+                  description: '这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。',
+                  confirmLabel: '继续显示',
+                });
+                if (!ok) return;
+                setShowSensitive(true);
+              })();
             }}
             title={showSensitive ? '隐藏敏感信息' : '显示敏感信息'}
             aria-label={showSensitive ? '隐藏敏感信息' : '显示敏感信息'}
           >
             {showSensitive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
-          <Button size="sm" variant="ghost" onClick={handleCopy}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleCopy}
+            title={showSensitive ? '复制（含敏感信息）' : '复制（脱敏）'}
+            aria-label={showSensitive ? '复制（含敏感信息）' : '复制（脱敏）'}
+          >
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
           <Button size="sm" variant="ghost" onClick={onClose}>
@@ -79,17 +98,7 @@ export function JsonPreview({ onClose, includeSensitive = false }: JsonPreviewPr
       </pre>
 
       <ConfirmDialog
-        open={showSensitiveConfirmOpen}
-        title="显示敏感信息？"
-        description="这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。"
-        confirmLabel="继续显示"
-        confirmVariant="destructive"
-        onCancel={() => setShowSensitiveConfirmOpen(false)}
-        onConfirm={() => {
-          setShowSensitiveConfirmOpen(false);
-          setShowSensitiveConfirmed(true);
-          setShowSensitive(true);
-        }}
+        {...dialogProps}
       />
     </div>
   );

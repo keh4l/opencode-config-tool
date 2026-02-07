@@ -4,6 +4,7 @@ import { configDiff } from '../src/lib/configDiff'
 import { importValidator } from '../src/lib/importValidator'
 import { hasPostApplyEdits } from '../src/lib/hasPostApplyEdits'
 import { isSensitivePath, redactConfig, redactDiff, redactValue } from '../src/lib/sensitiveRedaction'
+import { buildJsonText } from '../src/lib/buildJsonText'
 
 type TestCase = {
   name: string
@@ -208,6 +209,39 @@ test('JSON 预览/复制：基于 redactConfig 的字符串不包含敏感片段
   assert.ok(!json.includes('ghp_1234567890'))
   assert.ok(!json.includes('Bearer '))
   assert.ok(json.includes('******'))
+})
+
+test('buildJsonText: includeSensitive=false 时不泄露敏感片段', () => {
+  const raw = {
+    provider: {
+      x: {
+        options: {
+          apiKey: 'sk-should-not-leak',
+          headers: { Authorization: 'Bearer SHOULD_NOT_LEAK' },
+        },
+      },
+    },
+  }
+  const text = buildJsonText(raw, { includeSensitive: false, formatted: true })
+  assert.ok(!text.includes('sk-should-not-leak'))
+  assert.ok(!text.includes('Bearer '))
+  assert.ok(text.includes('******'))
+})
+
+test('buildJsonText: includeSensitive=true 时允许包含原值（用户显式选择）', () => {
+  const raw = {
+    provider: {
+      x: {
+        options: {
+          apiKey: 'sk-can-leak-by-choice',
+          headers: { Authorization: 'Bearer CAN_LEAK_BY_CHOICE' },
+        },
+      },
+    },
+  }
+  const text = buildJsonText(raw, { includeSensitive: true, formatted: true })
+  assert.ok(text.includes('sk-can-leak-by-choice'))
+  assert.ok(text.includes('Bearer CAN_LEAK_BY_CHOICE'))
 })
 
 let passed = 0
