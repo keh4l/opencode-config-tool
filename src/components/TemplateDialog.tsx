@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { SelectableCard } from '@/components/ui/selectable-card';
 // Button imported for potential future use
 import { LayoutTemplate } from 'lucide-react';
 
@@ -57,10 +58,10 @@ export function TemplateDialog({ open, onOpenChange }: TemplateDialogProps) {
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {templates.map((template) => (
-                    <button
+                    <SelectableCard
                       key={template.id}
                       onClick={() => handleApplyTemplate(template)}
-                      className="p-4 text-left rounded-lg border border-border hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      className="p-4"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl">{template.icon}</span>
@@ -71,7 +72,7 @@ export function TemplateDialog({ open, onOpenChange }: TemplateDialogProps) {
                       <p className="text-sm text-muted-foreground">
                         {template.description}
                       </p>
-                    </button>
+                    </SelectableCard>
                   ))}
                 </div>
               </div>

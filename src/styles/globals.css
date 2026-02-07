@@ -22,7 +22,31 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+
+    /* vNext semantic tokens (UI-UX升级方案.md) */
+    --surface-0: var(--background); /* page */
+    --surface-1: var(--card);       /* card */
+    --surface-2: var(--muted);      /* nested */
+    --surface-3: var(--accent);     /* hover/active */
+
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-muted: var(--muted-foreground);
+
+    --border-default: var(--border);
+
+    /* Mode branding (use sparingly; mainly for mode indicators) */
+    --brand-primary: 221.2 83.2% 53.3%;   /* OpenCode */
+    --brand-secondary: 270 95% 65%;       /* OMO */
+
+    /* State colors (semantic feedback) */
+    --state-success: 142.1 76.2% 36.3%;
+    --state-warning: 38 92% 50%;
+    --state-info: 221.2 83.2% 53.3%;
+    --state-destructive: var(--destructive);
+
+    /* Focus ring */
+    --ring: var(--brand-primary);
     --radius: 0.5rem;
   }
 
@@ -45,16 +69,45 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 25%;
     --input: 217.2 32.6% 25%;
-    --ring: 212.7 26.8% 83.9%;
+
+    /* vNext semantic tokens (UI-UX升级方案.md) */
+    --surface-0: var(--background);
+    --surface-1: var(--card);
+    --surface-2: var(--muted);
+    --surface-3: var(--accent);
+
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-muted: var(--muted-foreground);
+
+    --border-default: var(--border);
+
+    /* Brand hues can be slightly lighter in dark for contrast */
+    --brand-primary: 221.2 83.2% 63.3%;
+    --brand-secondary: 270 95% 72%;
+
+    --state-success: 142.1 70% 45%;
+    --state-warning: 38 92% 60%;
+    --state-info: 221.2 83.2% 63.3%;
+    --state-destructive: var(--destructive);
+
+    --ring: var(--brand-primary);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border-default;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Shared focus ring utility for custom interactive elements */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background;
   }
 }
 

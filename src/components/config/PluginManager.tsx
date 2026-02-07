@@ -57,9 +57,9 @@ export function PluginManager() {
               >
                 <div className="flex items-center gap-2">
                   {plugin.startsWith('./') || plugin.startsWith('../') ? (
-                    <FolderOpen className="h-4 w-4 text-amber-500" />
+                    <FolderOpen className="h-4 w-4 text-warning" />
                   ) : (
-                    <Package className="h-4 w-4 text-blue-500" />
+                    <Package className="h-4 w-4 text-info" />
                   )}
                   <code className="text-sm">{plugin}</code>
                 </div>

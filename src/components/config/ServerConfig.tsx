@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SettingRow } from '@/components/layout/SettingRow';
 import { Server, Globe, Radio, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import type { ServerConfig } from '@/types/config';
@@ -46,9 +47,12 @@ export function ServerConfigPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* 端口 */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="server-port">端口</Label>
+        <div className="divide-y">
+          <SettingRow
+            label="端口"
+            description="opencode serve / web 的监听端口"
+            htmlFor="server-port"
+          >
             <Input
               id="server-port"
               type="number"
@@ -58,45 +62,53 @@ export function ServerConfigPanel() {
               onChange={(e) => updateServer({ port: parseInt(e.target.value) || undefined })}
               placeholder="默认端口"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="server-hostname">主机名</Label>
+          </SettingRow>
+
+          <SettingRow
+            label="主机名"
+            description="例如 localhost / 0.0.0.0"
+            htmlFor="server-hostname"
+          >
             <Input
               id="server-hostname"
               value={server.hostname || ''}
               onChange={(e) => updateServer({ hostname: e.target.value || undefined })}
               placeholder="localhost"
             />
-          </div>
+          </SettingRow>
         </div>
 
         {/* mDNS 设置 */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="flex items-center gap-2">
+          <SettingRow
+            label={(
+              <span className="flex items-center gap-2">
                 <Radio className="h-4 w-4" />
                 mDNS 服务发现
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                启用局域网内的服务自动发现
-              </p>
-            </div>
+              </span>
+            )}
+            description="启用局域网内的服务自动发现"
+          >
             <Switch
               checked={server.mdns ?? false}
               onCheckedChange={(checked) => updateServer({ mdns: checked })}
             />
-          </div>
+          </SettingRow>
 
           {server.mdns && (
-            <div className="space-y-2 pl-6">
-              <Label htmlFor="mdns-domain">mDNS 域名</Label>
-              <Input
-                id="mdns-domain"
-                value={server.mdnsDomain || ''}
-                onChange={(e) => updateServer({ mdnsDomain: e.target.value || undefined })}
-                placeholder="opencode.local"
-              />
+            <div className="border rounded-lg px-3">
+              <SettingRow
+                label="mDNS 域名"
+                description="例如 opencode.local"
+                htmlFor="mdns-domain"
+              >
+                <Input
+                  id="mdns-domain"
+                  value={server.mdnsDomain || ''}
+                  onChange={(e) => updateServer({ mdnsDomain: e.target.value || undefined })}
+                  placeholder="opencode.local"
+                />
+              </SettingRow>
             </div>
           )}
         </div>
@@ -125,7 +137,7 @@ export function ServerConfigPanel() {
               {server.cors.map((origin, index) => (
                 <Badge key={index} variant="secondary" className="gap-1">
                   {origin}
-                  <button onClick={() => removeCorsOrigin(index)}>
+                  <button type="button" className="focus-ring rounded-sm" onClick={() => removeCorsOrigin(index)}>
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>

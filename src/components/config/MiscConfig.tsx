@@ -193,7 +193,7 @@ export function MiscConfigPanel() {
                 {config.disabled_providers.map((provider, index) => (
                   <Badge key={index} variant="destructive" className="gap-1">
                     {provider}
-                    <button onClick={() => removeDisabledProvider(index)}>
+                    <button type="button" className="focus-ring rounded-sm" onClick={() => removeDisabledProvider(index)}>
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -229,7 +229,7 @@ export function MiscConfigPanel() {
                 {config.enabled_providers.map((provider, index) => (
                   <Badge key={index} variant="default" className="gap-1">
                     {provider}
-                    <button onClick={() => removeEnabledProvider(index)}>
+                    <button type="button" className="focus-ring rounded-sm" onClick={() => removeEnabledProvider(index)}>
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -274,7 +274,7 @@ export function MiscConfigPanel() {
               {config.watcher.ignore.map((pattern, index) => (
                 <Badge key={index} variant="secondary" className="gap-1 font-mono text-xs">
                   {pattern}
-                  <button onClick={() => removeIgnorePattern(index)}>
+                  <button type="button" className="focus-ring rounded-sm" onClick={() => removeIgnorePattern(index)}>
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
@@ -313,7 +313,7 @@ export function MiscConfigPanel() {
               {config.skills.paths.map((path, index) => (
                 <Badge key={index} variant="secondary" className="gap-1 font-mono text-xs">
                   {path}
-                  <button onClick={() => removeSkillPath(index)}>
+                  <button type="button" className="focus-ring rounded-sm" onClick={() => removeSkillPath(index)}>
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>

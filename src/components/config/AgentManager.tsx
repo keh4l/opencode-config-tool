@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
 import { Button } from '@/components/ui/button';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -165,7 +166,7 @@ export function AgentManager() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <Bot className="h-4 w-4" style={{ color: agent.color || '#3b82f6' }} />
+                    <Bot className="h-4 w-4" style={{ color: agent.color || 'hsl(var(--brand-primary))' }} />
                     <span className="font-medium text-foreground">
                       {agent.name || id}
                     </span>
@@ -174,7 +175,7 @@ export function AgentManager() {
                         agent.mode === 'primary'
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                           : agent.mode === 'all'
-                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                          ? 'bg-secondary text-secondary-foreground'
                           : 'bg-secondary text-secondary-foreground'
                       }`}
                     >
@@ -198,7 +199,7 @@ export function AgentManager() {
                   )}
                   <div className="flex flex-wrap gap-2 text-xs">
                     {agent.model && (
-                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded">
+                      <span className="px-2 py-1 bg-muted text-foreground rounded">
                         {agent.model}
                       </span>
                     )}
@@ -235,7 +236,7 @@ export function AgentManager() {
                           </span>
                         )}
                         {agent.tools.bash && (
-                          <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded">
+                          <span className="px-2 py-1 rounded border border-warning/20 bg-warning/10 text-warning">
                             命令行
                           </span>
                         )}
@@ -273,10 +274,9 @@ export function AgentManager() {
             { id: 'refactor', name: '重构专家', desc: '代码重构和优化', mode: 'primary' as const, tools: { write: true, edit: true, bash: false } },
             { id: 'planner', name: '规划助手', desc: '项目规划和任务分解', mode: 'primary' as const, tools: { write: false, edit: false, bash: false } },
           ].filter(template => !agents[template.id]).map((template) => (
-            <Button
+            <SelectableCard
               key={template.id}
-              variant="outline"
-              className="h-auto py-3 flex flex-col items-start"
+              className="p-3 h-auto flex flex-col items-start"
               onClick={() => {
                 addAgent(template.id, {
                   name: template.name,
@@ -289,7 +289,7 @@ export function AgentManager() {
             >
               <span className="font-medium text-foreground">{template.name}</span>
               <span className="text-xs text-muted-foreground">{template.desc}</span>
-            </Button>
+            </SelectableCard>
           ))}
         </div>
       </ConfigCard>

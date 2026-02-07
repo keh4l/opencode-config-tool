@@ -1,6 +1,7 @@
 // src/components/config/JsonPreview.tsx
 import { useConfigStore } from '@/hooks/useConfig';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Copy,
   Check,
@@ -14,23 +15,35 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { ConfigCard } from '@/components/layout/Card';
+import { redactConfig } from '@/lib/sensitiveRedaction';
+import { FieldMessage } from '@/components/layout/FieldMessage';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface JsonPreviewProps {
   className?: string;
+  /** 默认 false：脱敏展示/复制 */
+  includeSensitive?: boolean;
 }
 
-export function JsonPreview({ className = '' }: JsonPreviewProps) {
+export function JsonPreview({ className = '', includeSensitive = false }: JsonPreviewProps) {
   const { config } = useConfigStore();
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isFormatted, setIsFormatted] = useState(true);
+  const [includeSensitiveState, setIncludeSensitiveState] = useState(includeSensitive);
+  const [includeSensitiveConfirmOpen, setIncludeSensitiveConfirmOpen] = useState(false);
+  const [includeSensitiveConfirmed, setIncludeSensitiveConfirmed] = useState(false);
+
+  const safeConfig = useMemo(() => {
+    return includeSensitiveState ? config : redactConfig(config);
+  }, [config, includeSensitiveState]);
 
   // Generate JSON with validation
   const { json, isValid, error, size } = useMemo(() => {
     try {
       const formatted = isFormatted
-        ? JSON.stringify(config, null, 2)
-        : JSON.stringify(config);
+        ? JSON.stringify(safeConfig, null, 2)
+        : JSON.stringify(safeConfig);
 
       // Calculate size in KB
       const bytes = new Blob([formatted]).size;
@@ -50,7 +63,7 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
         size: '0 KB'
       };
     }
-  }, [config, isFormatted]);
+  }, [isFormatted, safeConfig]);
 
   // Syntax highlighting
   const highlightedJson = useMemo(() => {
@@ -166,6 +179,25 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">包含敏感信息</span>
+              <Switch
+                checked={includeSensitiveState}
+                onCheckedChange={(next) => {
+                  if (!next) {
+                    setIncludeSensitiveState(false);
+                    return;
+                  }
+                  if (!includeSensitiveConfirmed) {
+                    setIncludeSensitiveConfirmOpen(true);
+                    return;
+                  }
+                  setIncludeSensitiveState(true);
+                }}
+                aria-label="包含敏感信息"
+              />
+            </div>
+
             {/* Format Toggle */}
             <Button
               size="sm"
@@ -217,6 +249,12 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
           </div>
         </div>
 
+        {includeSensitiveState && (
+          <FieldMessage variant="warning">
+            当前正在显示敏感信息（如 API Key/Token）。请确认环境安全，避免录屏/投屏泄露。
+          </FieldMessage>
+        )}
+
         {/* Error Message */}
         {!isValid && error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -233,6 +271,20 @@ export function JsonPreview({ className = '' }: JsonPreviewProps) {
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={includeSensitiveConfirmOpen}
+          title="显示敏感信息？"
+          description="这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。"
+          confirmLabel="继续显示"
+          confirmVariant="destructive"
+          onCancel={() => setIncludeSensitiveConfirmOpen(false)}
+          onConfirm={() => {
+            setIncludeSensitiveConfirmOpen(false);
+            setIncludeSensitiveConfirmed(true);
+            setIncludeSensitiveState(true);
+          }}
+        />
 
         {/* JSON Content */}
         {isExpanded && (

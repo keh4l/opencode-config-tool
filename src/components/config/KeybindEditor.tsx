@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useConfigStore } from '@/hooks/useConfig';
 import { ConfigCard } from '@/components/layout/Card';
+import { ConfigSection } from '@/components/layout/ConfigSection';
+import { SettingRow } from '@/components/layout/SettingRow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -94,25 +96,24 @@ export function KeybindEditor() {
           </div>
         }
       >
-        {/* 前缀键 (Leader)特殊显示 */}
-        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-blue-700 dark:text-blue-300">前缀键 (Leader)</h4>
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                大多数快捷键的前缀，使用 {'<leader>'} 表示
-              </p>
-            </div>
-            <Input
-              value={keybinds.leader || DEFAULT_KEYBINDS.leader}
-              onChange={(e) => handleKeybindChange('leader', e.target.value)}
-              className="w-40 font-mono"
-            />
+        <ConfigSection title="前缀键（Leader）" description="大多数快捷键的前缀，使用 <leader> 表示">
+          <div className="rounded-lg border px-3 bg-info/10 border-info/20">
+            <SettingRow
+              label="前缀键"
+              description="示例：ctrl+g"
+              className="py-3"
+            >
+              <Input
+                value={keybinds.leader || DEFAULT_KEYBINDS.leader}
+                onChange={(e) => handleKeybindChange('leader', e.target.value)}
+                className="w-40 font-mono"
+              />
+            </SettingRow>
           </div>
-        </div>
+        </ConfigSection>
 
-        {/* 分类快捷键 */}
-        <Accordion type="multiple" defaultValue={['application', 'session']} className="w-full">
+        <ConfigSection title="分类快捷键" description="按分类展开并编辑快捷键；支持按名称/描述搜索">
+          <Accordion type="multiple" defaultValue={['application', 'session']} className="w-full">
           {Object.entries(KEYBIND_CATEGORIES).map(([categoryId, keys]) => {
             const filteredKeys = filterKeybinds(keys);
             if (filteredKeys.length === 0) return null;
@@ -142,7 +143,7 @@ export function KeybindEditor() {
                             <div className="flex items-center gap-2">
                               <code className="text-sm font-medium">{key}</code>
                               {isModified && (
-                                <span className="px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded">
+                                <span className="px-1.5 py-0.5 text-xs rounded border border-warning/20 bg-warning/10 text-warning">
                                   已修改
                                 </span>
                               )}
@@ -176,7 +177,8 @@ export function KeybindEditor() {
               </AccordionItem>
             );
           })}
-        </Accordion>
+          </Accordion>
+        </ConfigSection>
       </ConfigCard>
 
       {/* 快捷键语法说明 */}
@@ -185,19 +187,19 @@ export function KeybindEditor() {
           <div>
             <h4 className="font-medium mb-2">修饰键</h4>
             <ul className="space-y-1 text-muted-foreground">
-            <li><code className="text-blue-500">ctrl</code> - Ctrl 键</li>
-            <li><code className="text-blue-500">alt</code> - Alt/Option 键</li>
-            <li><code className="text-blue-500">shift</code> - Shift 键</li>
-            <li><code className="text-blue-500">super</code> - Win/Cmd 键</li>
+	            <li><code className="text-info">ctrl</code> - Ctrl 键</li>
+	            <li><code className="text-info">alt</code> - Alt/Option 键</li>
+	            <li><code className="text-info">shift</code> - Shift 键</li>
+	            <li><code className="text-info">super</code> - Win/Cmd 键</li>
             </ul>
           </div>
           <div>
             <h4 className="font-medium mb-2">特殊语法</h4>
             <ul className="space-y-1 text-muted-foreground">
-              <li><code className="text-blue-500">{'<leader>'}</code> - 前缀键 (Leader)前缀</li>
-              <li><code className="text-blue-500">none</code> - 禁用快捷键</li>
-              <li><code className="text-blue-500">key1,key2</code> - 多个快捷键</li>
-              <li><code className="text-blue-500">ctrl+x</code> - 组合键</li>
+              <li><code className="text-info">{'<leader>'}</code> - 前缀键 (Leader)前缀</li>
+              <li><code className="text-info">none</code> - 禁用快捷键</li>
+              <li><code className="text-info">key1,key2</code> - 多个快捷键</li>
+              <li><code className="text-info">ctrl+x</code> - 组合键</li>
             </ul>
           </div>
         </div>

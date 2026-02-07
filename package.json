@@ -5,6 +5,8 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
+    "smoke:logic": "tsx scripts/smoke-logic.ts",
+    "check": "npm run smoke:logic && npm run build",
     "build": "tsc && vite build",
     "icons": "node scripts/generate-icons.mjs",
     "preview": "vite preview",

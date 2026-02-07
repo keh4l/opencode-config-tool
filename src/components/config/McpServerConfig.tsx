@@ -5,6 +5,7 @@ import { ConfigCard } from '@/components/layout/Card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
@@ -305,7 +306,7 @@ export function McpServerConfig() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <TypeIcon className="h-4 w-4 text-blue-500" />
+              <TypeIcon className="h-4 w-4 text-info" />
                       <span className="font-medium text-foreground">{id}</span>
                       <span className="text-xs px-2 py-0.5 bg-secondary rounded">
                         {getMcpTypeLabel(mcp)}
@@ -387,15 +388,14 @@ export function McpServerConfig() {
       <ConfigCard title="快速添加预设服务器" icon={Settings}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {MCP_PRESETS.filter(p => !mcpServers[p.id]).map((preset) => (
-            <Button
+            <SelectableCard
               key={preset.id}
-              variant="outline"
-              className="h-auto py-3 flex flex-col items-start"
+              className="p-3 h-auto flex flex-col items-start"
               onClick={() => handleApplyPreset(preset)}
             >
               <span className="font-medium text-foreground">{preset.name}</span>
               <span className="text-xs text-muted-foreground">{preset.description}</span>
-            </Button>
+            </SelectableCard>
           ))}
         </div>
       </ConfigCard>
@@ -493,7 +493,8 @@ export function McpServerConfig() {
                         >
                           <code>{arg}</code>
                           <button
-                            className="text-red-500 hover:text-red-600"
+                            type="button"
+                            className="focus-ring rounded-sm text-red-500 hover:text-red-600"
                             onClick={() => handleRemoveArg(index)}
                           >
                             ×
@@ -618,7 +619,7 @@ export function McpServerConfig() {
                     </div>
                     
                     {editingMcp.oauthEnabled && (
-                      <div className="space-y-3 pl-4 border-l-2 border-blue-500/20">
+          <div className="space-y-3 pl-4 border-l-2 border-info/20">
                         <div className="space-y-2">
                           <Label>客户端 ID</Label>
                           <Input
