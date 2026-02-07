@@ -15,9 +15,10 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { ConfigCard } from '@/components/layout/Card';
-import { redactConfig } from '@/lib/sensitiveRedaction';
 import { FieldMessage } from '@/components/layout/FieldMessage';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useSensitiveConsent } from '@/hooks/useSensitiveConsent';
+import { buildJsonText } from '@/lib/buildJsonText';
 
 interface JsonPreviewProps {
   className?: string;
@@ -31,19 +32,15 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
   const [isExpanded, setIsExpanded] = useState(true);
   const [isFormatted, setIsFormatted] = useState(true);
   const [includeSensitiveState, setIncludeSensitiveState] = useState(includeSensitive);
-  const [includeSensitiveConfirmOpen, setIncludeSensitiveConfirmOpen] = useState(false);
-  const [includeSensitiveConfirmed, setIncludeSensitiveConfirmed] = useState(false);
-
-  const safeConfig = useMemo(() => {
-    return includeSensitiveState ? config : redactConfig(config);
-  }, [config, includeSensitiveState]);
+  const { ensureConsent, dialogProps } = useSensitiveConsent();
 
   // Generate JSON with validation
   const { json, isValid, error, size } = useMemo(() => {
     try {
-      const formatted = isFormatted
-        ? JSON.stringify(safeConfig, null, 2)
-        : JSON.stringify(safeConfig);
+      const formatted = buildJsonText(config, {
+        includeSensitive: includeSensitiveState,
+        formatted: isFormatted,
+      });
 
       // Calculate size in KB
       const bytes = new Blob([formatted]).size;
@@ -63,7 +60,7 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
         size: '0 KB'
       };
     }
-  }, [isFormatted, safeConfig]);
+  }, [config, includeSensitiveState, isFormatted]);
 
   // Syntax highlighting
   const highlightedJson = useMemo(() => {
@@ -122,6 +119,14 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
 
   const handleCopy = async () => {
     try {
+      if (includeSensitiveState) {
+        const ok = await ensureConsent('copySensitive', {
+          title: '复制包含敏感信息？',
+          description: '复制到剪贴板将包含敏感信息（如 API Key/Token）。请确认当前环境安全，避免误粘贴或泄露。',
+          confirmLabel: '继续复制',
+        });
+        if (!ok) return;
+      }
       await navigator.clipboard.writeText(json);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -188,11 +193,16 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
                     setIncludeSensitiveState(false);
                     return;
                   }
-                  if (!includeSensitiveConfirmed) {
-                    setIncludeSensitiveConfirmOpen(true);
-                    return;
-                  }
-                  setIncludeSensitiveState(true);
+
+                  (async () => {
+                    const ok = await ensureConsent('revealSensitive', {
+                      title: '显示敏感信息？',
+                      description: '这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。',
+                      confirmLabel: '继续显示',
+                    });
+                    if (!ok) return;
+                    setIncludeSensitiveState(true);
+                  })();
                 }}
                 aria-label="包含敏感信息"
               />
@@ -232,7 +242,7 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
               variant="ghost"
               onClick={handleCopy}
               disabled={!isValid}
-              title="复制到剪贴板"
+              title={includeSensitiveState ? '复制（含敏感信息）' : '复制（脱敏）'}
             >
               {copied ? (
                 <>
@@ -242,7 +252,7 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
               ) : (
                 <>
                   <Copy className="h-4 w-4" />
-                  <span className="ml-1 text-xs">复制</span>
+                  <span className="ml-1 text-xs">{includeSensitiveState ? '复制（含敏感信息）' : '复制（脱敏）'}</span>
                 </>
               )}
             </Button>
@@ -272,19 +282,7 @@ export function JsonPreview({ className = '', includeSensitive = false }: JsonPr
           </div>
         )}
 
-        <ConfirmDialog
-          open={includeSensitiveConfirmOpen}
-          title="显示敏感信息？"
-          description="这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。"
-          confirmLabel="继续显示"
-          confirmVariant="destructive"
-          onCancel={() => setIncludeSensitiveConfirmOpen(false)}
-          onConfirm={() => {
-            setIncludeSensitiveConfirmOpen(false);
-            setIncludeSensitiveConfirmed(true);
-            setIncludeSensitiveState(true);
-          }}
-        />
+        <ConfirmDialog {...dialogProps} />
 
         {/* JSON Content */}
         {isExpanded && (

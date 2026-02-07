@@ -20,7 +20,9 @@ import type { ConfigMode } from '@/components/layout/Sidebar';
 import { ImportWizard } from '@/components/import/ImportWizard';
 import { useFeatureFlagsStore } from '@/hooks/useFeatureFlags';
 import { FieldMessage } from '@/components/layout/FieldMessage';
-import { redactConfig } from '@/lib/sensitiveRedaction';
+import { useSensitiveConsent } from '@/hooks/useSensitiveConsent';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { buildJsonText } from '@/lib/buildJsonText';
 
 interface ImportExportDialogProps {
   mode: 'import' | 'export' | null;
@@ -36,6 +38,7 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
   const [importText, setImportText] = useState('');
   const [copied, setCopied] = useState(false);
   const [includeSensitiveInExport, setIncludeSensitiveInExport] = useState(false);
+  const { ensureConsent, dialogProps } = useSensitiveConsent();
 
   const isOpenCodeMode = configMode === 'opencode';
   const configName = isOpenCodeMode ? 'OpenCode' : 'Oh My OpenCode';
@@ -48,11 +51,7 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
 
   const exportConfigObj = isOpenCodeMode ? openCodeStore.config : omoStore.config;
   const exportJson = mode === 'export'
-    ? JSON.stringify(
-      includeSensitiveInExport ? exportConfigObj : redactConfig(exportConfigObj),
-      null,
-      2
-    )
+    ? buildJsonText(exportConfigObj, { includeSensitive: includeSensitiveInExport, formatted: true })
     : '';
 
   const handleLegacyImport = () => {
@@ -79,6 +78,14 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
 
   const handleCopy = async () => {
     try {
+      if (includeSensitiveInExport) {
+        const ok = await ensureConsent('exportSensitive', {
+          title: '复制包含敏感信息？',
+          description: '复制到剪贴板将包含敏感信息（如 API Key/Token）。请确认当前环境安全，避免误粘贴或泄露。',
+          confirmLabel: '继续复制',
+        });
+        if (!ok) return;
+      }
       await navigator.clipboard.writeText(exportJson);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -96,6 +103,14 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
   };
 
   const handleDownload = async () => {
+    if (includeSensitiveInExport) {
+      const ok = await ensureConsent('exportSensitive', {
+        title: '导出包含敏感信息？',
+        description: '导出/下载的文件将包含敏感信息（如 API Key/Token）。请确认当前环境安全，并妥善保管导出文件。',
+        confirmLabel: '继续导出',
+      });
+      if (!ok) return;
+    }
     if (isElectron && window.electronAPI) {
       const savePath = await window.electronAPI.saveFileDialog(fileName);
       if (!savePath) return;
@@ -195,13 +210,28 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
                   </div>
                   <Switch
                     checked={includeSensitiveInExport}
-                    onCheckedChange={(checked) => setIncludeSensitiveInExport(checked)}
+                    onCheckedChange={(checked) => {
+                      if (!checked) {
+                        setIncludeSensitiveInExport(false);
+                        return;
+                      }
+
+                      (async () => {
+                        const ok = await ensureConsent('revealSensitive', {
+                          title: '显示敏感信息？',
+                          description: '这会在屏幕上显示敏感信息。请确认当前环境安全，避免录屏/投屏泄露。',
+                          confirmLabel: '继续显示',
+                        });
+                        if (!ok) return;
+                        setIncludeSensitiveInExport(true);
+                      })();
+                    }}
                   />
                 </div>
 
                 {includeSensitiveInExport && (
                   <FieldMessage variant="warning" className="mt-2">
-                    包含敏感信息的导出文件请妥善保管，避免泄露。
+                    包含敏感信息的导出文件请妥善保管，避免泄露。复制/下载将包含敏感信息。
                   </FieldMessage>
                 )}
               </div>
@@ -214,7 +244,13 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
                   className="font-mono text-sm"
                 />
                 <div className="absolute top-2 right-2 flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={handleCopy}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleCopy}
+                    title={includeSensitiveInExport ? '复制（含敏感信息）' : '复制（脱敏）'}
+                    aria-label={includeSensitiveInExport ? '复制（含敏感信息）' : '复制（脱敏）'}
+                  >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
@@ -240,6 +276,8 @@ export function ImportExportDialog({ mode, configMode, onClose }: ImportExportDi
             )}
           </DialogFooter>
         )}
+
+        <ConfirmDialog {...dialogProps} />
       </DialogContent>
     </Dialog>
   );
