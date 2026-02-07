@@ -387,58 +387,73 @@ export function Sidebar({ activeItem, onItemChange, collapsed = false, onCollaps
         {/* Search (filters sidebar items only; not panel content) */}
         {!collapsed && (
           <div className="px-2">
-            <div className="relative w-full max-w-full min-w-0">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                ref={searchRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜索…"
-                aria-describedby="sidebar-search-help"
-                className={cn(
-                  'pl-8 w-full max-w-full min-w-0 focus-visible:ring-inset focus-visible:ring-offset-0',
-                  query.trim() ? 'pr-10' : 'pr-24 sm:pr-32 lg:pr-56'
-                )}
-              />
+            <div className="w-full max-w-full min-w-0 space-y-1">
+              <div className="relative w-full max-w-full min-w-0">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  ref={searchRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="搜索…"
+                  aria-describedby="sidebar-search-help sidebar-search-hint"
+                  className={cn(
+                    'pl-8 w-full max-w-full min-w-0 focus-visible:ring-inset focus-visible:ring-offset-0',
+                    query.trim() ? 'pr-10' : 'pr-24 sm:pr-32 lg:pr-56'
+                  )}
+                />
 
-              {/* 读屏提示：不要把关键信息塞进 placeholder */}
-              <span id="sidebar-search-help" className="sr-only">
-                侧栏搜索。快捷键：Cmd 或 Ctrl + K 聚焦。支持语法：@modified。
-              </span>
+                {/* 读屏提示：不要把关键信息塞进 placeholder */}
+                <span id="sidebar-search-help" className="sr-only">
+                  侧栏搜索。快捷键：Cmd 或 Ctrl + K 聚焦。支持语法：@modified。
+                </span>
 
               {/* 辅助提示：仅在空输入时展示，避免挡住输入内容 */}
-              {!query.trim() && (
-                <div
-                  className={cn(
-                    'pointer-events-none absolute right-2 top-1/2 -translate-y-1/2',
-                    'flex items-center gap-2 text-xs text-muted-foreground'
-                  )}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
-                      ⌘K
-                    </kbd>
-                    <kbd className="hidden sm:inline-flex rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
-                      Ctrl K
-                    </kbd>
-                  </span>
-                  <span className="hidden lg:inline">支持 @modified</span>
-                </div>
-              )}
+                {!query.trim() && (
+                  <div
+                    className={cn(
+                      'pointer-events-none absolute right-2 top-1/2 -translate-y-1/2',
+                      'flex items-center gap-2 text-xs text-muted-foreground'
+                    )}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                        ⌘K
+                      </kbd>
+                      <kbd className="hidden sm:inline-flex rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                        Ctrl K
+                      </kbd>
+                    </span>
+                  </div>
+                )}
 
-              {query.trim() && (
-                <button
-                  type="button"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm opacity-70 hover:opacity-100 focus-ring"
-                  aria-label="清除搜索"
-                  onClick={() => {
-                    setQuery('');
-                    setTimeout(() => searchRef.current?.focus(), 0);
-                  }}
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              )}
+                {query.trim() && (
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm opacity-70 hover:opacity-100 focus-ring"
+                    aria-label="清除搜索"
+                    onClick={() => {
+                      setQuery('');
+                      setTimeout(() => searchRef.current?.focus(), 0);
+                    }}
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+
+              {/* 轻提示：保证 @modified 可发现性（不占输入框布局宽度） */}
+              <div
+                id="sidebar-search-hint"
+                className="w-full max-w-full min-w-0 text-xs text-muted-foreground"
+              >
+                <span className="inline-flex items-center gap-2 min-w-0">
+                  <span className="shrink-0 rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                    @modified
+                  </span>
+                  <span className="min-w-0 truncate sm:hidden">只看已修改</span>
+                  <span className="min-w-0 truncate hidden sm:inline">提示：输入 @modified 查看本次修改</span>
+                </span>
+              </div>
             </div>
           </div>
         )}
